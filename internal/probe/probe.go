@@ -74,8 +74,11 @@ type runner struct {
 
 	remote   interpret.RemoteSize
 	baseline *interpret.Fingerprint
-	ifMatch  string
-	retained map[string]*interpret.Retained
+	// ifMatch is the protocol value of the first strong ETag, sent verbatim.
+	ifMatch string
+	// etagProblem is why the first unusable ETag field was unusable.
+	etagProblem string
+	retained    map[string]*interpret.Retained
 
 	checks      []model.Check
 	changes     []string
@@ -295,15 +298,18 @@ func (r *runner) observe(it plan.Item, an *interpret.HeadAnalysis, ex *transport
 			r.repr.Stable = false
 		}
 	}
-	if r.baseline == nil && (fp.HasETag || fp.TotalKnown || fp.LastModified != "") {
+	if r.baseline == nil && (fp.ETag.Present() || fp.TotalKnown || fp.LastModified != "") {
 		cp := fp
 		r.baseline = &cp
 	}
-	if fp.HasETag && !fp.ETagWeak {
+	if fp.ETag.Kind == interpret.ETagStrong {
 		r.strongETag = true
 		if r.ifMatch == "" {
-			r.ifMatch = fp.ETag
+			r.ifMatch = fp.ETag.Tag
 		}
+	}
+	if fp.ETag.Kind == interpret.ETagUnusable && r.etagProblem == "" {
+		r.etagProblem = fp.ETag.Problem
 	}
 	if !r.remote.Known && fp.TotalKnown {
 		basis := "content-range"
@@ -314,11 +320,11 @@ func (r *runner) observe(it plan.Item, an *interpret.HeadAnalysis, ex *transport
 	}
 	if !r.reprSet {
 		r.reprSet = true
-		r.repr.ETag = fp.ETag
-		switch {
-		case fp.HasETag && !fp.ETagWeak:
+		r.repr.ETag = fp.ETag.Display()
+		switch fp.ETag.Kind {
+		case interpret.ETagStrong:
 			r.repr.ETagStrength = "strong"
-		case fp.HasETag:
+		case interpret.ETagWeak:
 			r.repr.ETagStrength = "weak"
 		}
 		r.repr.LastModified = fp.LastModified
@@ -398,7 +404,7 @@ func (r *runner) requestInfo(req transport.Request, it plan.Item) *model.Request
 		{Key: "User-Agent", Value: version.UserAgent()},
 	}
 	if req.IfMatch != "" {
-		hs = append(hs, model.KV{Key: "If-Match", Value: redact.Clean(req.IfMatch, 200)})
+		hs = append(hs, model.KV{Key: "If-Match", Value: interpret.DisplayETag(req.IfMatch)})
 	}
 	names := make([]string, 0, len(r.opt.Headers))
 	for n := range r.opt.Headers {
@@ -488,8 +494,12 @@ func (r *runner) report(started, finished time.Time) *model.Report {
 	}
 	rep.Representation.Changes = r.changes
 	if !r.strongETag && r.reprSet {
+		ev := []model.KV{model.Ev("etag_strength", r.repr.ETagStrength)}
+		if r.etagProblem != "" {
+			ev = append(ev, model.Ev("etag_problem", r.etagProblem))
+		}
 		rep.RunFindings = append(rep.RunFindings, model.NewFinding("WEAK_VALIDATORS", "no strong ETag was seen; identity of the representation across requests cannot be established",
-			model.Ev("etag_strength", r.repr.ETagStrength)).
+			ev...).
 			WithLimits("Consistency findings that need one representation are reported as inconclusive when bytes differ."))
 	}
 	if r.refChanged {

@@ -363,7 +363,7 @@ Only weak or no strong validators observed.
 
 Requires:
 
-- no strong ETag was seen
+- no strong ETag was seen (a repeated, malformed or oversize ETag does not count)
 
 ## Skip reasons
 

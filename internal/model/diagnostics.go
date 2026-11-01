@@ -97,7 +97,7 @@ var Registry = map[string]DiagInfo{
 	"EXTRA_BYTE_CHECK_SKIPPED": {KindNote, "excess-byte check not performed",
 		[]string{"the remaining byte budget or body limit left no room to read one octet beyond the declared length"}},
 	"WEAK_VALIDATORS": {KindNote, "only weak or no strong validators observed",
-		[]string{"no strong ETag was seen"}},
+		[]string{"no strong ETag was seen (a repeated, malformed or oversize ETag does not count)"}},
 	"ENDPOINT_VARIED": {KindNote, "final endpoint differed between requests",
 		[]string{"redirects led to different hosts or paths for different probes"}},
 

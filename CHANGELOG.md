@@ -5,6 +5,21 @@ All notable changes are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Set the release date in the heading
 before tagging; the release workflow refuses an undated heading.
 
+## [0.1.1]
+
+### Fixed
+
+- Long ETags no longer produce false conclusions. Two different ETags that began alike were
+  shortened for display and then compared as equal, which reported a replaced file as
+  `OVERLAP_INCONSISTENT` or `REREAD_INCONSISTENT`. ETags are now compared in full; a changed
+  ETag makes the affected comparisons `inconclusive`.
+- `--preconditions` sent the shortened ETag in `If-Match` and got `412` from an unchanged
+  resource. The complete value is sent now.
+- An ETag that is repeated, malformed or longer than 8000 octets is no longer treated as a
+  strong validator: it gives no strong evidence and is never sent in `If-Match`.
+  `WEAK_VALIDATORS` names the reason in `etag_problem`.
+- An ETag cut for display in a report now ends with a short SHA-256 of the whole value.
+
 ## [0.1.0] - 2026-11-01
 
 First version.

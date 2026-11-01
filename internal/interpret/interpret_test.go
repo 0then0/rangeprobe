@@ -9,8 +9,7 @@ import (
 func fp(etag string, total int64, lm string) Fingerprint {
 	f := Fingerprint{Total: total, TotalKnown: total >= 0, LastModified: lm, Encoding: "identity"}
 	if etag != "" {
-		f.HasETag, f.ETag = true, etag
-		f.ETagWeak = len(etag) > 1 && etag[:2] == "W/"
+		f.ETag = ParseETag([]string{etag})
 	}
 	return f
 }

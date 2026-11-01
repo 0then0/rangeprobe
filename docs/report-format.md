@@ -13,8 +13,9 @@ run              mode ("reference"|"observe"), started_at, finished_at, duration
                  header names only)
 reference        name (redacted), size             (reference mode only)
 endpoint         final_url, redirects[], varied_between_requests
-representation   length (null if the server reported none), length_basis, etag, etag_strength
-                 ("strong"|"weak"|"none"), last_modified, accept_ranges, content_type,
+representation   length (null if the server reported none), length_basis, etag (display form:
+                 escaped, cut at 200 characters), etag_strength ("strong"|"weak"|"none";
+                 "none" also for an unusable ETag), last_modified, accept_ranges, content_type,
                  stable, changes[]
 summary          result ("pass"|"problem"|"range_ignored"|"incomplete"), exit_code, headline,
                  counts{status: n}, mismatch_pattern, key_checks_not_passed[],

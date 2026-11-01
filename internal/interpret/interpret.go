@@ -76,10 +76,7 @@ func AnalyzeHead(p Params, h *transport.Head) *HeadAnalysis {
 		enc = "identity"
 	}
 	a.EncodingOK = enc == "identity"
-	if et := h.Header.Get("ETag"); et != "" {
-		a.FP.HasETag, a.FP.ETag = true, clean(et)
-		a.FP.ETagWeak = strings.HasPrefix(et, "W/") || !strings.HasPrefix(et, `"`)
-	}
+	a.FP.ETag = ParseETag(h.Header.Values("ETag"))
 	a.FP.LastModified = clean(h.Header.Get("Last-Modified"))
 
 	switch h.Status {

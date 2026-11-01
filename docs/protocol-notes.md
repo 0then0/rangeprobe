@@ -60,6 +60,15 @@ A strong ETag identifies a representation byte for byte (8.8.1, 8.8.3.2). A weak
 so it is never used to confirm identity and never sent in `If-Match` (13.1.1 requires the strong
 comparison there). Last-Modified is only a weak hint.
 
+An `ETag` value counts only if it matches `entity-tag` (8.8.3): an optional `W/`, then a quoted
+opaque-tag of octets `%x21`, `%x23-7E` and `%x80-FF`. The opaque-tag is compared octet by octet,
+never decoded, case-folded or normalised, and is kept whole. A repeated `ETag` field, a value that
+is not an entity-tag, or a value longer than 8000 octets is unusable: it can neither match nor
+conflict, creates no strong evidence and is never sent in `If-Match`; `WEAK_VALIDATORS` gives the
+reason in its `etag_problem` evidence. Reports show an ETag escaped and cut to 200 characters, with
+a SHA-256 prefix of the whole value when it was cut; that display form is never used for comparison
+or for `If-Match`.
+
 Every response yields a fingerprint: ETag with its strength, complete length (from `Content-Range`
 or from `Content-Length` of a `200`), Last-Modified and content coding. Comparing two fingerprints
 gives:
@@ -76,10 +85,10 @@ gives:
 Equal Last-Modified values, or an absence of header changes, never raise a comparison above weak.
 Nothing requires reading the whole file to establish a version.
 
-`--preconditions` sends `If-Match` with the first strong ETag. Per 14.2 the Range header is
-evaluated after preconditions, so a replaced file yields `412` (`PRECONDITION_FAILED`,
-inconclusive) rather than a `206` with new bytes. It is optional because some servers evaluate
-`If-Match` on `GET` unreliably. `If-Range` conformance and controlled version switching are out of
+`--preconditions` sends `If-Match` with the first strong ETag, exactly as the server sent it. Per
+14.2 the Range header is evaluated after preconditions, so a replaced file yields `412`
+(`PRECONDITION_FAILED`, inconclusive) rather than a `206` with new bytes. It is optional because
+some servers evaluate `If-Match` on `GET` unreliably. `If-Range` conformance and controlled version switching are out of
 scope for v0.1.
 
 ## Size knowledge

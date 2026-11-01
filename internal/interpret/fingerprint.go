@@ -2,7 +2,6 @@ package interpret
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/0then0/rangeprobe/internal/redact"
 )
@@ -11,9 +10,7 @@ import (
 // representation it belongs to. Equal signals never prove identity; they only
 // fail to contradict it.
 type Fingerprint struct {
-	HasETag      bool
-	ETag         string // as sent, including W/ prefix and quotes
-	ETagWeak     bool
+	ETag         ETag
 	LastModified string
 	Total        int64
 	TotalKnown   bool
@@ -48,16 +45,16 @@ func (e Evidence) String() string {
 	return "conflict"
 }
 
-func opaque(tag string) string { return strings.TrimPrefix(tag, "W/") }
-
 // Compare relates two fingerprints. The returned reasons explain a conflict.
 func Compare(a, b Fingerprint) (Evidence, []string) {
 	var why []string
 	if a.TotalKnown && b.TotalKnown && a.Total != b.Total {
 		why = append(why, fmt.Sprintf("complete length %d vs %d", a.Total, b.Total))
 	}
-	if a.HasETag && b.HasETag && opaque(a.ETag) != opaque(b.ETag) {
-		why = append(why, fmt.Sprintf("ETag %s vs %s", redact.Clean(a.ETag, 80), redact.Clean(b.ETag, 80)))
+	// Unusable ETags are neither equal nor different: they cannot be compared.
+	// Only the reason text is shortened; the comparison uses the whole tag.
+	if a.ETag.Valid() && b.ETag.Valid() && a.ETag.opaque() != b.ETag.opaque() {
+		why = append(why, fmt.Sprintf("ETag %s vs %s", displayETag(a.ETag.Tag, 80), displayETag(b.ETag.Tag, 80)))
 	}
 	if a.LastModified != "" && b.LastModified != "" && a.LastModified != b.LastModified {
 		why = append(why, fmt.Sprintf("Last-Modified %s vs %s", redact.Clean(a.LastModified, 40), redact.Clean(b.LastModified, 40)))
@@ -68,11 +65,11 @@ func Compare(a, b Fingerprint) (Evidence, []string) {
 	if len(why) > 0 {
 		return EvidenceConflict, why
 	}
-	if a.HasETag && b.HasETag && !a.ETagWeak && !b.ETagWeak {
+	if a.ETag.Kind == ETagStrong && b.ETag.Kind == ETagStrong {
 		return EvidenceStrong, nil
 	}
 	return EvidenceWeak, nil
 }
 
 // HasStrongETag reports whether the fingerprint carries a strong ETag.
-func (f Fingerprint) HasStrongETag() bool { return f.HasETag && !f.ETagWeak }
+func (f Fingerprint) HasStrongETag() bool { return f.ETag.Kind == ETagStrong }
