@@ -1,0 +1,57 @@
+name: Bug report
+description: RangeProbe crashed, gave a wrong verdict, or a report is misleading
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove secrets before posting: signed URLs, tokens, cookies and private paths.
+        RangeProbe redacts URL query values and local directories in reports by default.
+        Do not paste response bodies or `--dump-mismatch` fragments of private files.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `rangeprobe version`
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options: [reference, observe]
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The command line with host, path and secrets replaced by placeholders.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Paste the text summary, or the relevant parts of the JSON report. Include the diagnostic IDs.
+    validations:
+      required: true
+  - type: textarea
+    id: server
+    attributes:
+      label: Server
+      description: Server software and version, and any proxy or CDN in front, if you know them.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I removed secrets and private data from everything above.
+          required: true

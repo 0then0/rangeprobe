@@ -1,0 +1,102 @@
+RangeProbe 0.1.0, reference mode
+Target:     http://127.0.0.1:58074/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED&X-Amz-Credential=REDACTED&X-Amz-Date=REDACTED&X-Amz-Expires=REDACTED&X-Amz-SignedHeaders=REDACTED&X-Amz-Signature=REDACTED
+Reference: object.bin, 25,165,824 bytes (assumed identical to the published file; not verified)
+Length:     25,165,824 bytes (reported by the server: content-range)
+ETag:       "7b7bbda09b073c0035362439e0c4f795" (strong)
+
+RESULT: PROBLEM (exit code 1)
+  A confirmed problem was found (5 pass, 5 violation).
+  Key checks not passed: tail, suffix
+
+Checks
+  first-byte     PASS       bytes=0-0                206 bytes 0-0/25165824                1 B read (complete)
+  head           PASS       bytes=0-49151            206 bytes 0-49151/25165824            49,152 B read (complete)
+  middle         PASS       bytes=12558336-12607487  206 bytes 12558336-12607487/25165824  49,152 B read (complete)
+  tail           VIOLATION  bytes=25116672-25165823  206 bytes 25116672-25165823/25165824  0 B read (truncated)
+  suffix         VIOLATION  bytes=-49152             206 bytes 25116672-25165823/25165824  0 B read (truncated)
+  open-ended     VIOLATION  bytes=25116672-          206 bytes 25116672-25165823/25165824  0 B read (truncated)
+  past-eof       VIOLATION  bytes=25141248-25214975  206 bytes 25141248-25165823/25165824  0 B read (truncated)
+  unsatisfiable  PASS       bytes=25165824-          416                                   135 B read (discarded)
+  overlap        VIOLATION  bytes=12582912-12632063  206 bytes 12582912-12632063/25165824  0 B read (truncated)
+  reread         PASS       bytes=12558336-12607487  206 bytes 12558336-12607487/25165824  49,152 B read (complete)
+
+Findings
+  [BODY_TRUNCATED] tail (violation): the body ended before the declared length
+      status = 206
+      declared_length = 49152
+      bytes_read = 0
+      content_length = 49152
+      content_range = bytes 25116672-25165823/25165824
+      chunked = false
+      requires: status is 206 (or 200 with Content-Length); the peer closed the stream cleanly or the framing ended early before the declared octets arrived; the read was not cut by a RangeProbe budget
+      limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
+  [BODY_TRUNCATED] suffix (violation): the body ended before the declared length
+      status = 206
+      declared_length = 49152
+      bytes_read = 0
+      content_length = 49152
+      content_range = bytes 25116672-25165823/25165824
+      chunked = false
+      requires: status is 206 (or 200 with Content-Length); the peer closed the stream cleanly or the framing ended early before the declared octets arrived; the read was not cut by a RangeProbe budget
+      limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
+  [BODY_TRUNCATED] open-ended (violation): the body ended before the declared length
+      status = 206
+      declared_length = 49152
+      bytes_read = 0
+      content_length = 49152
+      content_range = bytes 25116672-25165823/25165824
+      chunked = false
+      requires: status is 206 (or 200 with Content-Length); the peer closed the stream cleanly or the framing ended early before the declared octets arrived; the read was not cut by a RangeProbe budget
+      limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
+  [BODY_TRUNCATED] past-eof (violation): the body ended before the declared length
+      status = 206
+      declared_length = 24576
+      bytes_read = 0
+      content_length = 24576
+      content_range = bytes 25141248-25165823/25165824
+      chunked = false
+      requires: status is 206 (or 200 with Content-Length); the peer closed the stream cleanly or the framing ended early before the declared octets arrived; the read was not cut by a RangeProbe budget
+      limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
+  [RANGE_416_CONTENT_RANGE_MISSING] unsatisfiable (note): 416 without Content-Range
+      status = 416
+      requires: status is 416; RFC 9110 14.4 says a server SHOULD include Content-Range bytes */length
+  [BODY_TRUNCATED] overlap (violation): the body ended before the declared length
+      status = 206
+      declared_length = 49152
+      bytes_read = 0
+      content_length = 49152
+      content_range = bytes 12582912-12632063/25165824
+      chunked = false
+      requires: status is 206 (or 200 with Content-Length); the peer closed the stream cleanly or the framing ended early before the declared octets arrived; the read was not cut by a RangeProbe budget
+      limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
+
+Verified claims
+  - first-byte: 206 with Content-Range 0-0 consistent with request bytes=0-0
+  - first-byte: body length equals the declared interval length (1 bytes), no excess octet seen
+  - first-byte: bytes 0-0 equal the reference file's bytes 0-0 (1 bytes compared, sha256 ab61ba11a38b007f…)
+  - head: 206 with Content-Range 0-49151 consistent with request bytes=0-49151
+  - head: body length equals the declared interval length (49152 bytes), no excess octet seen
+  - head: bytes 0-49151 equal the reference file's bytes 0-49151 (49152 bytes compared, sha256 2d931a77fdc64f18…)
+  - middle: 206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487
+  - middle: body length equals the declared interval length (49152 bytes), no excess octet seen
+  - middle: bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)
+  - unsatisfiable: 416 for the unsatisfiable range (no usable Content-Range)
+  - reread: 206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487
+  - reread: body length equals the declared interval length (49152 bytes), no excess octet seen
+  - reread: bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)
+  - reread: bytes 12558336-12607487 are identical in two separate responses (reread); this shows consistency, not correctness
+
+Not supported in v0.1
+  - multipart/byteranges responses (multi-range requests) are not requested or parsed
+  - content codings other than identity: encoded bytes are not compared
+  - If-Range conformance and controlled version switching
+
+Assumptions
+  - Requests are sent sequentially and never retried; each probe is independent.
+  - Only body bytes count toward the byte budget; headers do not.
+  - Content-Range offsets and lengths are interpreted as octets of the representation data (RFC 9110 14.1.2), not of any decoded content.
+  - The reference file is assumed to be byte-identical to the currently published representation; RangeProbe cannot verify this.
+  - The reference length places offsets when the server reports none; it is not evidence of the remote length.
+  - A byte mismatch is an observation. It does not prove a defect in the server's Range handling: the reference may be another file or version.
+
+Budget: 10 of 16 requests, 147,592 of 8,388,608 body bytes, 27 ms

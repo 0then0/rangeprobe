@@ -31,3 +31,10 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# RangeProbe
+/rangeprobe
+/rangeprobe.exe
+/dist/
+.DS_Store
+/lab/rustfs/rustfslab

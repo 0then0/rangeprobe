@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a check, option or report improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        RangeProbe v0.1 is deliberately small. Out of scope: load testing, multipart/byteranges,
+        a full HTTP conformance suite, scanning for endpoints, and telemetry. See the README.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can you not tell about a server today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The request to send, the response properties to check, and the claim it would support.
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: What it would not prove
+      description: Name the cases where the check cannot decide.

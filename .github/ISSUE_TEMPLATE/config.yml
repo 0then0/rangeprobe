@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/0then0/rangeprobe/blob/main/SECURITY.md
+    about: Do not open a public issue for vulnerabilities. Read SECURITY.md first.

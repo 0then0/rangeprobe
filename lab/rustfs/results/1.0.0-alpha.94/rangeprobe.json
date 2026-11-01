@@ -1,0 +1,1004 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "rangeprobe",
+    "version": "0.1.0",
+    "repository": "https://github.com/0then0/rangeprobe"
+  },
+  "run": {
+    "mode": "reference",
+    "started_at": "2026-11-01T08:32:45Z",
+    "finished_at": "2026-11-01T08:32:45Z",
+    "duration_ms": 42,
+    "target": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+    "params": {
+      "max_requests": 16,
+      "max_total_bytes": 8388608,
+      "max_response_bytes": 2097152,
+      "request_timeout_ms": 30000,
+      "run_timeout_ms": 120000,
+      "max_redirects": 5,
+      "probe_size": 49152,
+      "preconditions": false,
+      "user_header_names": [],
+      "redact_locations": true,
+      "dump_mismatch_bytes": 0,
+      "custom_ca": false
+    },
+    "interrupted": false
+  },
+  "reference": {
+    "name": "object.bin",
+    "size": 25165824
+  },
+  "endpoint": {
+    "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+    "varied_between_requests": false
+  },
+  "representation": {
+    "length": 25165824,
+    "length_basis": "content-range",
+    "etag": "\"7b7bbda09b073c0035362439e0c4f795\"",
+    "etag_strength": "strong",
+    "last_modified": "Sun, 01 Nov 2026 08:32:44 GMT",
+    "accept_ranges": "bytes",
+    "content_type": "application/octet-stream",
+    "stable": true
+  },
+  "summary": {
+    "result": "pass",
+    "exit_code": 0,
+    "headline": "All key checks passed (10 pass). Content identity with an unseen original is not proven.",
+    "counts": {
+      "pass": 10
+    }
+  },
+  "checks": [
+    {
+      "id": "first-byte",
+      "title": "First byte",
+      "key": true,
+      "claim": "bytes=0-0 returns exactly the first byte with a consistent Content-Range",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=0-0",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=0-0"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=0-0\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 0-0/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "1"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 1,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 1,
+        "read_limit": 2,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "ab61ba11a38b007ff98baa3ab20e2a584e15269fd428db3c857e2a2d568b5725",
+        "declared_length": 1,
+        "reference_comparison": {
+          "compared_bytes": 1,
+          "expected_first": 0,
+          "expected_last": 0,
+          "match": true,
+          "expected_sha256": "ab61ba11a38b007ff98baa3ab20e2a584e15269fd428db3c857e2a2d568b5725"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 0-0 consistent with request bytes=0-0",
+        "body length equals the declared interval length (1 bytes), no excess octet seen",
+        "bytes 0-0 equal the reference file's bytes 0-0 (1 bytes compared, sha256 ab61ba11a38b007f…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 3
+    },
+    {
+      "id": "head",
+      "title": "Range at the start",
+      "key": true,
+      "claim": "a small range at the start returns the requested bytes",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=0-49151",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=0-49151"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=0-49151\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 0-49151/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "2d931a77fdc64f18b51964403454a520c904334b80bee826139f44cb9d850016",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 0,
+          "expected_last": 49151,
+          "match": true,
+          "expected_sha256": "2d931a77fdc64f18b51964403454a520c904334b80bee826139f44cb9d850016"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 0-49151 consistent with request bytes=0-49151",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 0-49151 equal the reference file's bytes 0-49151 (49152 bytes compared, sha256 2d931a77fdc64f18…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 3
+    },
+    {
+      "id": "middle",
+      "title": "Range in the middle",
+      "key": true,
+      "claim": "a range in the middle of the file returns the requested bytes",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=12558336-12607487",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=12558336-12607487"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=12558336-12607487\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 12558336-12607487/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "5d1d2be2326dd2e5d9eb05fe13bf7981f92fd94137e28343cdecf0d182d929e7",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 12558336,
+          "expected_last": 12607487,
+          "match": true,
+          "expected_sha256": "5d1d2be2326dd2e5d9eb05fe13bf7981f92fd94137e28343cdecf0d182d929e7"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 4
+    },
+    {
+      "id": "tail",
+      "title": "Range at the end",
+      "key": true,
+      "claim": "the last bytes, requested by explicit offsets, are returned",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=25116672-25165823",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=25116672-25165823"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=25116672-25165823\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 25116672-25165823/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 25116672,
+          "expected_last": 25165823,
+          "match": true,
+          "expected_sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 25116672-25165823 consistent with request bytes=25116672-25165823",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 4
+    },
+    {
+      "id": "suffix",
+      "title": "Suffix range",
+      "key": true,
+      "claim": "a suffix range returns the last N bytes",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=-49152",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=-49152"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=-49152\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 25116672-25165823/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 25116672,
+          "expected_last": 25165823,
+          "match": true,
+          "expected_sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 25116672-25165823 consistent with request bytes=-49152",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 5
+    },
+    {
+      "id": "open-ended",
+      "title": "Open-ended range",
+      "key": false,
+      "claim": "an open-ended range near the end returns everything up to EOF",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=25116672-",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=25116672-"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=25116672-\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 25116672-25165823/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 25116672,
+          "expected_last": 25165823,
+          "match": true,
+          "expected_sha256": "a2da5a3f05dad6eb8b618c376336ca2263e03602b27b90f0904ba8297b80e2cb"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 25116672-25165823 consistent with request bytes=25116672-",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 5
+    },
+    {
+      "id": "past-eof",
+      "title": "Range ending beyond EOF",
+      "key": false,
+      "claim": "a last-pos beyond EOF is clamped to the representation length",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=25141248-25214975",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=25141248-25214975"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=25141248-25214975\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 25141248-25165823/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "24576"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 24576,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 24576,
+        "read_limit": 24577,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "451139f68cf27a027b63ef10993ffdd88ab86ab2a07582366ff2e057b010a571",
+        "declared_length": 24576,
+        "reference_comparison": {
+          "compared_bytes": 24576,
+          "expected_first": 25141248,
+          "expected_last": 25165823,
+          "match": true,
+          "expected_sha256": "451139f68cf27a027b63ef10993ffdd88ab86ab2a07582366ff2e057b010a571"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 25141248-25165823 consistent with request bytes=25141248-25214975",
+        "body length equals the declared interval length (24576 bytes), no excess octet seen",
+        "bytes 25141248-25165823 equal the reference file's bytes 25141248-25165823 (24576 bytes compared, sha256 451139f68cf27a02…)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 4
+    },
+    {
+      "id": "unsatisfiable",
+      "title": "Unsatisfiable range",
+      "key": false,
+      "claim": "a range starting at EOF is answered with 416 (or a full 200)",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=25165824-",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=25165824-"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=25165824-\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 416,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Content-Length",
+            "value": "135"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/xml"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 1,
+        "content_length": 135,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 135,
+        "read_limit": 4096,
+        "complete": false,
+        "end_state": "discarded",
+        "sha256": "d85c4e522a1772743361468ed1c4c4e555abb5f7f120a2107e6787f142274e33"
+      },
+      "findings": [
+        {
+          "id": "RANGE_416_CONTENT_RANGE_MISSING",
+          "kind": "note",
+          "message": "416 without Content-Range",
+          "conditions": [
+            "status is 416",
+            "RFC 9110 14.4 says a server SHOULD include Content-Range bytes */length"
+          ],
+          "evidence": [
+            {
+              "key": "status",
+              "value": "416"
+            }
+          ],
+          "limits": []
+        }
+      ],
+      "verified": [
+        "416 for the unsatisfiable range (no usable Content-Range)"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 1
+    },
+    {
+      "id": "overlap",
+      "title": "Overlapping ranges",
+      "key": false,
+      "claim": "two overlapping ranges return identical bytes for their common interval",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=12582912-12632063",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=12582912-12632063"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=12582912-12632063\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 12582912-12632063/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "092097a6047eabbbb82efd0622fdc500bf549b48b4214785cda40634a6b3ca03",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 12582912,
+          "expected_last": 12632063,
+          "match": true,
+          "expected_sha256": "092097a6047eabbbb82efd0622fdc500bf549b48b4214785cda40634a6b3ca03"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 12582912-12632063 consistent with request bytes=12582912-12632063",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 12582912-12632063 equal the reference file's bytes 12582912-12632063 (49152 bytes compared, sha256 092097a6047eabbb…)",
+        "bytes 12582912-12607487 are identical in two separate responses (overlap); this shows consistency, not correctness"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 4
+    },
+    {
+      "id": "reread",
+      "title": "Re-read",
+      "key": false,
+      "claim": "re-reading a range returns the same bytes",
+      "status": "pass",
+      "request": {
+        "method": "GET",
+        "url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "range": "bytes=12558336-12607487",
+        "headers": [
+          {
+            "key": "Range",
+            "value": "bytes=12558336-12607487"
+          },
+          {
+            "key": "Accept-Encoding",
+            "value": "identity"
+          },
+          {
+            "key": "User-Agent",
+            "value": "rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+          }
+        ],
+        "description": "GET http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED\nRange: bytes=12558336-12607487\nAccept-Encoding: identity\nUser-Agent: rangeprobe/0.1.0 (+https://github.com/0then0/rangeprobe)"
+      },
+      "response": {
+        "status": 206,
+        "proto": "HTTP/1.1",
+        "final_url": "http://127.0.0.1:58113/rangeprobe-lab/object.bin?X-Amz-Algorithm=REDACTED\u0026X-Amz-Credential=REDACTED\u0026X-Amz-Date=REDACTED\u0026X-Amz-Expires=REDACTED\u0026X-Amz-SignedHeaders=REDACTED\u0026X-Amz-Signature=REDACTED",
+        "headers": [
+          {
+            "key": "Accept-Ranges",
+            "value": "bytes"
+          },
+          {
+            "key": "Content-Range",
+            "value": "bytes 12558336-12607487/25165824"
+          },
+          {
+            "key": "Content-Length",
+            "value": "49152"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream"
+          },
+          {
+            "key": "ETag",
+            "value": "\"7b7bbda09b073c0035362439e0c4f795\""
+          },
+          {
+            "key": "Last-Modified",
+            "value": "Sun, 01 Nov 2026 08:32:44 GMT"
+          },
+          {
+            "key": "Date",
+            "value": "Sun, 01 Nov 2026 08:32:45 GMT"
+          }
+        ],
+        "other_header_count": 2,
+        "content_length": 49152,
+        "chunked": false
+      },
+      "body": {
+        "bytes_read": 49152,
+        "read_limit": 49153,
+        "complete": true,
+        "end_state": "complete",
+        "sha256": "5d1d2be2326dd2e5d9eb05fe13bf7981f92fd94137e28343cdecf0d182d929e7",
+        "declared_length": 49152,
+        "reference_comparison": {
+          "compared_bytes": 49152,
+          "expected_first": 12558336,
+          "expected_last": 12607487,
+          "match": true,
+          "expected_sha256": "5d1d2be2326dd2e5d9eb05fe13bf7981f92fd94137e28343cdecf0d182d929e7"
+        }
+      },
+      "findings": [],
+      "verified": [
+        "206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487",
+        "body length equals the declared interval length (49152 bytes), no excess octet seen",
+        "bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)",
+        "bytes 12558336-12607487 are identical in two separate responses (reread); this shows consistency, not correctness"
+      ],
+      "limits": [
+        "Assumes the reference file is byte-identical to the currently published representation."
+      ],
+      "duration_ms": 5
+    }
+  ],
+  "run_findings": [],
+  "verified_claims": [
+    "first-byte: 206 with Content-Range 0-0 consistent with request bytes=0-0",
+    "first-byte: body length equals the declared interval length (1 bytes), no excess octet seen",
+    "first-byte: bytes 0-0 equal the reference file's bytes 0-0 (1 bytes compared, sha256 ab61ba11a38b007f…)",
+    "head: 206 with Content-Range 0-49151 consistent with request bytes=0-49151",
+    "head: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "head: bytes 0-49151 equal the reference file's bytes 0-49151 (49152 bytes compared, sha256 2d931a77fdc64f18…)",
+    "middle: 206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487",
+    "middle: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "middle: bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)",
+    "tail: 206 with Content-Range 25116672-25165823 consistent with request bytes=25116672-25165823",
+    "tail: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "tail: bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)",
+    "suffix: 206 with Content-Range 25116672-25165823 consistent with request bytes=-49152",
+    "suffix: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "suffix: bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)",
+    "open-ended: 206 with Content-Range 25116672-25165823 consistent with request bytes=25116672-",
+    "open-ended: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "open-ended: bytes 25116672-25165823 equal the reference file's bytes 25116672-25165823 (49152 bytes compared, sha256 a2da5a3f05dad6eb…)",
+    "past-eof: 206 with Content-Range 25141248-25165823 consistent with request bytes=25141248-25214975",
+    "past-eof: body length equals the declared interval length (24576 bytes), no excess octet seen",
+    "past-eof: bytes 25141248-25165823 equal the reference file's bytes 25141248-25165823 (24576 bytes compared, sha256 451139f68cf27a02…)",
+    "unsatisfiable: 416 for the unsatisfiable range (no usable Content-Range)",
+    "overlap: 206 with Content-Range 12582912-12632063 consistent with request bytes=12582912-12632063",
+    "overlap: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "overlap: bytes 12582912-12632063 equal the reference file's bytes 12582912-12632063 (49152 bytes compared, sha256 092097a6047eabbb…)",
+    "overlap: bytes 12582912-12607487 are identical in two separate responses (overlap); this shows consistency, not correctness",
+    "reread: 206 with Content-Range 12558336-12607487 consistent with request bytes=12558336-12607487",
+    "reread: body length equals the declared interval length (49152 bytes), no excess octet seen",
+    "reread: bytes 12558336-12607487 equal the reference file's bytes 12558336-12607487 (49152 bytes compared, sha256 5d1d2be2326dd2e5…)",
+    "reread: bytes 12558336-12607487 are identical in two separate responses (reread); this shows consistency, not correctness"
+  ],
+  "unsupported": [
+    "multipart/byteranges responses (multi-range requests) are not requested or parsed",
+    "content codings other than identity: encoded bytes are not compared",
+    "If-Range conformance and controlled version switching"
+  ],
+  "uncertainty": [],
+  "assumptions": [
+    "Requests are sent sequentially and never retried; each probe is independent.",
+    "Only body bytes count toward the byte budget; headers do not.",
+    "Content-Range offsets and lengths are interpreted as octets of the representation data (RFC 9110 14.1.2), not of any decoded content.",
+    "The reference file is assumed to be byte-identical to the currently published representation; RangeProbe cannot verify this.",
+    "The reference length places offsets when the server reports none; it is not evidence of the remote length.",
+    "A byte mismatch is an observation. It does not prove a defect in the server's Range handling: the reference may be another file or version."
+  ],
+  "budget": {
+    "requests": 10,
+    "max_requests": 16,
+    "bytes_read": 368776,
+    "max_total_bytes": 8388608
+  }
+}

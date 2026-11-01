@@ -1,0 +1,11 @@
+image: rustfs/rustfs:1.0.0-alpha.93
+digest: rustfs/rustfs@sha256:f1b59053332cdaa00c6a0d08b43f02fb2d12bf2749098b6d9d5eed693b39b695
+platform: linux/arm64
+docker: 29.9.2
+object_bytes: 25165824
+object_sha256: 42d65a939da63831a8dac71dbf28ca918d77b8617b3df2976423b8c7d2442b04
+full_get: identical
+oracle_bad_ranges: 7
+rangeprobe_exit_code: 1
+rangeprobe_command: rangeprobe reference <presigned-url> object.bin --probe-size 48KiB
+run_at_utc: 2026-11-01T08:32:40Z
