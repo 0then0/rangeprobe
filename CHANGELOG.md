@@ -5,7 +5,7 @@ All notable changes are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Set the release date in the heading
 before tagging; the release workflow refuses an undated heading.
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-11-01
 
 First version.
 
