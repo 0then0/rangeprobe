@@ -34,7 +34,7 @@ go build -trimpath -o rangeprobe ./cmd/rangeprobe
 ```
 
 Prebuilt archives for Linux, macOS and Windows (amd64 and arm64) are available in the
-[v0.1.1 release](https://github.com/0then0/rangeprobe/releases/tag/v0.1.1).
+[v0.2.0 release](https://github.com/0then0/rangeprobe/releases/tag/v0.2.0).
 See [Verifying a download](#verifying-a-download).
 
 ## Use
