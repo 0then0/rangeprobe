@@ -228,7 +228,7 @@ func TestParseSize(t *testing.T) {
 
 func TestVersionAndHelp(t *testing.T) {
 	code, out, _ := run(t, nil, "version")
-	if code != 0 || !strings.HasPrefix(out, "rangeprobe 0.1.1") {
+	if code != 0 || !strings.HasPrefix(out, "rangeprobe 0.2.0") {
 		t.Errorf("%d %q", code, out)
 	}
 	code, out, _ = run(t, nil, "help")

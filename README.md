@@ -20,7 +20,7 @@ file returns wrong or empty data. That breaks Parquet readers, video seeking and
 The motivating case is [rustfs/rustfs#2506](https://github.com/rustfs/rustfs/issues/2506),
 reproduced in the [lab](docs/lab/rustfs-2506.md).
 
-RangeProbe v0.1.1 is a CLI written in Go with no dependencies beyond the standard library.
+RangeProbe v0.2.0 is a CLI written in Go with no dependencies beyond the standard library, plus a static [browser page](#in-the-browser).
 
 ## Install
 
