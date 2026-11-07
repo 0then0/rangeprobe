@@ -1,0 +1,93 @@
+{
+  "about": "Planned requests of the CLI planner (internal/plan) and of the browser page (web/js/plan.js), which runs only the key checks. Both read this file; neither may change a range without changing it here. length is the representation length used to place offsets; remote says whether the server reported it (false: taken from the reference file).",
+  "cases": [
+    {
+      "name": "README example: 1 MiB, 4 KiB probes",
+      "probe_size": 4096, "length": 1048576, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-4095", "middle": "bytes=522240-526335",
+        "tail": "bytes=1044480-1048575", "suffix": "bytes=-4096"
+      }
+    },
+    {
+      "name": "length from the reference only gives the same ranges",
+      "probe_size": 4096, "length": 1048576, "remote": false,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-4095", "middle": "bytes=522240-526335",
+        "tail": "bytes=1044480-1048575", "suffix": "bytes=-4096"
+      }
+    },
+    {
+      "name": "10000 bytes, 100-byte probes",
+      "probe_size": 100, "length": 10000, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-99", "middle": "bytes=4950-5049",
+        "tail": "bytes=9900-9999", "suffix": "bytes=-100"
+      }
+    },
+    {
+      "name": "probe larger than half the file",
+      "probe_size": 4096, "length": 5000, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-4095", "middle": "bytes=452-4547",
+        "tail": "bytes=904-4999", "suffix": "bytes=-4096"
+      }
+    },
+    {
+      "name": "probe larger than the file is clamped",
+      "probe_size": 4096, "length": 3, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-2", "middle": "bytes=0-2",
+        "tail": "bytes=0-2", "suffix": "bytes=-3"
+      }
+    },
+    {
+      "name": "one-byte file",
+      "probe_size": 4096, "length": 1, "remote": false,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-0", "middle": "bytes=0-0",
+        "tail": "bytes=0-0", "suffix": "bytes=-1"
+      }
+    },
+    {
+      "name": "one-byte probes",
+      "probe_size": 1, "length": 10, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-0", "middle": "bytes=5-5",
+        "tail": "bytes=9-9", "suffix": "bytes=-1"
+      }
+    },
+    {
+      "name": "empty file: only the discovery request is sent",
+      "probe_size": 4096, "length": 0, "remote": false,
+      "ranges": {"first-byte": "bytes=0-0"},
+      "skips": {
+        "head": "SKIP_ZERO_LENGTH", "middle": "SKIP_ZERO_LENGTH", "tail": "SKIP_ZERO_LENGTH", "suffix": "SKIP_ZERO_LENGTH"
+      }
+    },
+    {
+      "name": "server length wins over the reference length",
+      "probe_size": 100, "length": 2000, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-99", "middle": "bytes=950-1049",
+        "tail": "bytes=1900-1999", "suffix": "bytes=-100"
+      }
+    },
+    {
+      "name": "about 1 TiB",
+      "probe_size": 4096, "length": 1099511627776, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-4095", "middle": "bytes=549755811840-549755815935",
+        "tail": "bytes=1099511623680-1099511627775", "suffix": "bytes=-4096"
+      }
+    },
+    {
+      "name": "largest length the page can hold exactly (2^53-1)",
+      "probe_size": 4096, "length": 9007199254740991, "remote": true,
+      "ranges": {
+        "first-byte": "bytes=0-0", "head": "bytes=0-4095", "middle": "bytes=4503599627368447-4503599627372542",
+        "tail": "bytes=9007199254736895-9007199254740990", "suffix": "bytes=-4096"
+      }
+    }
+  ]
+}

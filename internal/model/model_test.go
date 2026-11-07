@@ -54,6 +54,9 @@ Notes never change a status. A skipped check carries a skip reason ID instead of
 		for _, id := range ids {
 			info := Registry[id]
 			fmt.Fprintf(&b, "### `%s`\n\n%s.\n\n", id, strings.ToUpper(info.Title[:1])+info.Title[1:])
+			if BrowserOnly[id] {
+				b.WriteString("Emitted only by the browser page, never by the CLI.\n\n")
+			}
 			if len(info.Conditions) > 0 {
 				b.WriteString("Requires:\n\n")
 				for _, c := range info.Conditions {
@@ -100,6 +103,14 @@ func TestRegistryIsConsistent(t *testing.T) {
 		}
 		if info.Kind != KindSkipped && strings.HasPrefix(id, "SKIP_") {
 			t.Errorf("%s: only skip reasons start with SKIP_", id)
+		}
+	}
+}
+
+func TestBrowserOnlyIDsAreRegistered(t *testing.T) {
+	for id := range BrowserOnly {
+		if _, ok := Registry[id]; !ok {
+			t.Errorf("%s is listed as browser-only but not registered", id)
 		}
 	}
 }

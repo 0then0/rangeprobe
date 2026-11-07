@@ -5,6 +5,29 @@ All notable changes are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Set the release date in the heading
 before tagging; the release workflow refuses an undated heading.
 
+## [Unreleased]
+
+### Added
+
+- A static browser page (`web/`) that sends the key checks from the browser with `fetch()`
+  (`credentials: omit`, bounded reads, deadlines, cancel), compares the bytes with slices of a
+  local reference file and saves a JSON report. It reports the byte comparison and the header
+  evidence it could read as two separate results, and says what a page cannot see (CORS-hidden
+  headers, automatic content decoding, the cause of a rejected fetch). See `docs/browser.md`.
+- Four diagnostics that only the page emits: `CONTENT_RANGE_NOT_VISIBLE`,
+  `ENCODING_DECODED_BY_BROWSER`, `ENCODING_NOT_OBSERVABLE`, `FETCH_REJECTED`.
+- `testdata/shared`: planner and judging cases that the CLI (`internal/parity`) and the page
+  (`web/test`) both must satisfy.
+- `lab/browser`: a local stand with two origins and reproducible routes (correct, hidden
+  `Content-Range`, no CORS, wrong bytes, ignored Range with a 256 MiB response, slow headers and
+  body, gzip).
+
+### Changed
+
+- The conditions of `BYTES_MISMATCH_REFERENCE`, `STATUS_206_NO_CONTENT_RANGE`,
+  `NUMBER_OUT_OF_RANGE` and `CANCELLED` now state their meaning for both capture modes. The CLI's
+  behaviour is unchanged.
+
 ## [0.1.1] - 2026-11-01
 
 ### Fixed

@@ -14,6 +14,9 @@ fi
 heading=$(grep -m1 -F "## [$version]" CHANGELOG.md || true)
 [ -n "$heading" ] || { echo "CHANGELOG.md has no '## [$version]' section" >&2; exit 1; }
 
+web_version=$(sed -n 's/^export const VERSION = "\(.*\)";$/\1/p' web/js/config.js)
+[ "$web_version" = "$version" ] || { echo "web/js/config.js VERSION '$web_version' does not match $version in internal/version/version.go" >&2; exit 1; }
+
 if [ "${1:-}" = "--tag" ]; then
   tag=${2:?usage: check-release.sh --tag vX.Y.Z}
   [ "$tag" = "v$version" ] || { echo "tag $tag does not match version v$version in internal/version/version.go" >&2; exit 1; }

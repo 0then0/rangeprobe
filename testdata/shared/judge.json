@@ -1,0 +1,1026 @@
+{
+ "about": "One response judged against one request and a reference. The CLI judges it with internal/interpret, the page with web/js/judge.js; both must produce the expected result. visibility full: every response header is readable (the CLI always; a same-origin fetch). visibility cors: only the headers a cross-origin page may read are present. Reference byte i is (167*i + 61*(i>>8) + 13) mod 256. body.ref [a,b] delivers reference bytes a..b (b<a: none); shift moves the source window; flip inverts the bytes at those body offsets; cut keeps only that many bytes; extra appends bytes that never match; error ends the body with that failure after the delivered bytes. A body shorter than the read limit ends with EOF unless error is set.",
+ "vectors": [
+  {
+   "name": "206 head, correct bytes",
+   "ref_size": 1000,
+   "request": "bytes=0-99",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 0-99/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [0, 99]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 suffix, correct bytes",
+   "ref_size": 1000,
+   "request": "bytes=-100",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 900-999/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [900, 999]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with unknown total length",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/*",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 covering only part of the request",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-149/1000",
+     "Content-Length": "50"
+    }
+   },
+   "body": {
+    "ref": [100, 149]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [
+     "PARTIAL_RESPONSE"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with one wrong byte",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "flip": [10]
+   },
+   "expect": {
+    "status": "byte_mismatch",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE"
+    ],
+    "bytes": "mismatch",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 shifted by one byte",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "shift": 1
+   },
+   "expect": {
+    "status": "byte_mismatch",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE"
+    ],
+    "bytes": "mismatch",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 for a file of another length",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1200",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "REFERENCE_SIZE_MISMATCH"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 of another length, bytes also differ: downgraded",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1200",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "flip": [3]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE",
+     "REFERENCE_SIZE_MISMATCH"
+    ],
+    "bytes": "mismatch",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "200 to a range request, prefix equal",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 200,
+    "headers": {
+     "Content-Length": "1000"
+    }
+   },
+   "body": {
+    "ref": [0, 999]
+   },
+   "expect": {
+    "status": "range_ignored",
+    "findings": [
+     "RANGE_IGNORED"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "200 to a range request, prefix differs",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 200,
+    "headers": {
+     "Content-Length": "1000"
+    }
+   },
+   "body": {
+    "ref": [0, 999],
+    "flip": [3]
+   },
+   "expect": {
+    "status": "byte_mismatch",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE",
+     "RANGE_IGNORED"
+    ],
+    "bytes": "mismatch",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "200 of another length than the reference",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 200,
+    "headers": {
+     "Content-Length": "1200"
+    }
+   },
+   "body": {
+    "ref": [0, 999],
+    "extra": 200
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE",
+     "RANGE_IGNORED",
+     "REFERENCE_SIZE_MISMATCH"
+    ],
+    "bytes": "mismatch",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "200 carrying Content-Range",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 200,
+    "headers": {
+     "Content-Range": "bytes 0-999/1000",
+     "Content-Length": "1000"
+    }
+   },
+   "body": {
+    "ref": [0, 999]
+   },
+   "expect": {
+    "status": "range_ignored",
+    "findings": [
+     "FULL_RESPONSE_CONTENT_RANGE",
+     "RANGE_IGNORED"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 without Content-Range, headers fully visible",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "STATUS_206_NO_CONTENT_RANGE"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with last-pos before first-pos",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 199-100/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "CONTENT_RANGE_INVALID"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with a repeated Content-Range",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": [
+      "bytes 100-199/1000",
+      "bytes 100-199/1000"
+     ],
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "CONTENT_RANGE_INVALID"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with a number beyond int64",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/99999999999999999999",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "NUMBER_OUT_OF_RANGE"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 outside the requested range",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-299/1000",
+     "Content-Length": "200"
+    }
+   },
+   "body": {
+    "ref": [100, 299]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "CONTENT_RANGE_OUTSIDE_REQUEST"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 multipart/byteranges",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Type": "multipart/byteranges; boundary=x",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "MULTIPART_UNSUPPORTED"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "Content-Length differs from the Content-Range interval",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "90"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "CONTENT_LENGTH_RANGE_MISMATCH"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "body ends before the declared length",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 50
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "BODY_TRUNCATED"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "body longer than the declared length",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 200]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "BODY_EXCESS"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "per-response read limit stops a long body",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "max_body": 50,
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "BODY_LIMIT_REACHED"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "network error while reading the body",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 40,
+    "error": "error"
+   },
+   "expect": {
+    "status": "transport_error",
+    "findings": [
+     "BODY_READ_ERROR"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "timeout while reading the body",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 40,
+    "error": "timeout"
+   },
+   "expect": {
+    "status": "transport_error",
+    "findings": [
+     "REQUEST_TIMEOUT"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "cancel while reading the body",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 40,
+    "error": "cancelled"
+   },
+   "expect": {
+    "status": "transport_error",
+    "findings": [
+     "CANCELLED"
+    ],
+    "bytes": "match",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "416 for the only possible request on an empty file",
+   "ref_size": 0,
+   "request": "bytes=0-0",
+   "response": {
+    "status": 416,
+    "headers": {
+     "Content-Range": "bytes */0"
+    }
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "416 without Content-Range, headers fully visible",
+   "ref_size": 0,
+   "request": "bytes=0-0",
+   "response": {
+    "status": 416,
+    "headers": {}
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [
+     "RANGE_416_CONTENT_RANGE_MISSING"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "416 although the range is satisfiable",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 416,
+    "headers": {
+     "Content-Range": "bytes */1000"
+    }
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "SATISFIABLE_GOT_416"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "503 from a gateway",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 503,
+    "headers": {
+     "Retry-After": "5"
+    }
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "transport_error",
+    "findings": [
+     "HTTP_SERVER_ERROR"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "404 for the URL",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 404,
+    "headers": {}
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "HTTP_STATUS_UNEXPECTED"
+    ],
+    "bytes": "not_compared",
+    "encoding": "identity"
+   }
+  },
+  {
+   "name": "206 with a visible content coding",
+   "note": "The CLI asks for identity and reports the coding as unsupported; a browser cannot ask for identity and says that it decodes.",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Encoding": "gzip",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "ENCODING_UNSUPPORTED"
+    ],
+    "bytes": "not_compared",
+    "encoding": "encoded"
+   },
+   "expect_browser": {
+    "status": "inconclusive",
+    "findings": [
+     "ENCODING_DECODED_BY_BROWSER"
+    ],
+    "bytes": "not_compared",
+    "encoding": "encoded"
+   }
+  },
+  {
+   "name": "cross-origin 206, everything readable, correct bytes",
+   "note": "A pass still cannot show that the browser did not decode a content coding; the encoding is reported as not observable.",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "pass",
+    "findings": [],
+    "bytes": "match",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 206, Content-Range hidden, correct bytes",
+   "note": "The bytes equal the requested slice, but the header half of the check cannot be completed.",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "CONTENT_RANGE_NOT_VISIBLE"
+    ],
+    "bytes": "match",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 206, Content-Range hidden, wrong bytes",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "flip": [5]
+   },
+   "expect": {
+    "status": "byte_mismatch",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE",
+     "CONTENT_RANGE_NOT_VISIBLE"
+    ],
+    "bytes": "mismatch",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 206, Content-Range hidden, shorter body",
+   "note": "Without Content-Range the interval of a shorter body is unknown, so it is not compared.",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Length": "60"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 60
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "CONTENT_RANGE_NOT_VISIBLE"
+    ],
+    "bytes": "not_compared",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 206, Content-Range hidden, longer body",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Length": "150"
+    }
+   },
+   "body": {
+    "ref": [100, 249]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "CONTENT_RANGE_NOT_VISIBLE"
+    ],
+    "bytes": "not_compared",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 416 without a readable Content-Range",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 0,
+   "request": "bytes=0-0",
+   "response": {
+    "status": 416,
+    "headers": {}
+   },
+   "body": {
+    "ref": [0, -1]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "CONTENT_RANGE_NOT_VISIBLE"
+    ],
+    "bytes": "not_compared",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin Content-Length differs from Content-Range",
+   "note": "Two headers of one response contradict each other; no body and no decoding is involved, so it is a violation here as well.",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "90"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "violation",
+    "findings": [
+     "CONTENT_LENGTH_RANGE_MISMATCH"
+    ],
+    "bytes": "match",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin short body: a decoded body could explain it",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "cut": 50
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "BODY_TRUNCATED"
+    ],
+    "bytes": "match",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 200: Content-Length is not taken as the file length",
+   "note": "A compressed full response has a shorter Content-Length than the file; it must not be reported as a different file.",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 200,
+    "headers": {
+     "Content-Length": "400"
+    }
+   },
+   "body": {
+    "ref": [0, 999]
+   },
+   "expect": {
+    "status": "range_ignored",
+    "findings": [
+     "RANGE_IGNORED"
+    ],
+    "bytes": "match",
+    "encoding": "not_observable"
+   }
+  },
+  {
+   "name": "cross-origin 206 with a visible content coding",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Encoding": "gzip",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199]
+   },
+   "expect": {
+    "status": "inconclusive",
+    "findings": [
+     "ENCODING_DECODED_BY_BROWSER"
+    ],
+    "bytes": "not_compared",
+    "encoding": "encoded"
+   }
+  },
+  {
+   "name": "cross-origin wrong bytes with everything readable",
+   "modes": [
+    "browser"
+   ],
+   "visibility": "cors",
+   "ref_size": 1000,
+   "request": "bytes=100-199",
+   "response": {
+    "status": 206,
+    "headers": {
+     "Content-Range": "bytes 100-199/1000",
+     "Content-Length": "100"
+    }
+   },
+   "body": {
+    "ref": [100, 199],
+    "shift": 1
+   },
+   "expect": {
+    "status": "byte_mismatch",
+    "findings": [
+     "BYTES_MISMATCH_REFERENCE"
+    ],
+    "bytes": "mismatch",
+    "encoding": "not_observable"
+   }
+  }
+ ]
+}

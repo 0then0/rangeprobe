@@ -47,10 +47,24 @@ that fails without it.
 `docs/diagnostics.md` is generated from the registry. After adding or changing an ID run:
 
 ```bash
-RANGEPROBE_UPDATE_DOCS=1 go test ./internal/model -run TestDiagnosticsDoc
+RANGEPROBE_UPDATE_DOCS=1 go test ./internal/model ./internal/parity -run 'TestDiagnosticsDoc|TestRegistryJS'
 ```
 
-and commit the result. The normal test fails if the file is out of date.
+and commit the result (it also regenerates `web/js/registry.js`, the browser page's copy of the
+registry). The normal test fails if either file is out of date.
+
+### The browser page
+
+`web/` is plain ES modules with no dependencies. Its planner and judge are ports of `internal/plan`
+and `internal/interpret`; `testdata/shared/*.json` holds the cases both sides must satisfy, so change a
+rule in both places and add or update a case. Run the page's tests with Node 20 or newer:
+
+```bash
+node --test web/test/*.test.js
+```
+
+Try the page against `go run ./lab/browser` (see `docs/browser.md`). Keep `VERSION` in
+`web/js/config.js` equal to `internal/version/version.go`; `scripts/check-release.sh` checks it.
 
 ### Package layout
 
@@ -64,6 +78,9 @@ and commit the result. The normal test fails if the file is out of date.
 | `internal/report` | Text, JSON, HTML and safe file writing. |
 | `internal/model` | Report types, diagnostics registry, exit codes. |
 | `internal/cli` | Flags, input files, output. |
+| `internal/parity` | Tests that run `testdata/shared` against the CLI's rules; generates `web/js/registry.js`. |
+| `web` | The static browser page and its Node tests. |
+| `lab/browser` | The two-origin stand for the page. Part of the main module, standard library only. |
 | `lab/rustfs` | Separate module: the RustFS lab. Not built by `go test ./...`. |
 
 ## The lab

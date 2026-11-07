@@ -101,6 +101,7 @@ Requires:
 
 - status is 206
 - Content-Type is not multipart/byteranges
+- the response headers are fully visible (always for the CLI; in a browser only for a same-origin response)
 - RFC 9110 15.3.7.1 requires Content-Range in a single-part 206
 
 ### `UNSATISFIABLE_GOT_206`
@@ -123,8 +124,9 @@ Response bytes differ from the reference slice.
 Requires:
 
 - reference mode
-- response is 206 (or a 200 prefix), uses identity encoding, and its representation signals do not conflict with earlier responses
-- the reference file length equals the length the server reports
+- response is 206 (or a 200 prefix) and declares no content coding other than identity
+- the reference file length equals the length the response reports, when it reports one
+- its representation signals do not conflict with earlier responses
 
 ## Range ignored
 
@@ -161,6 +163,32 @@ Requires:
 - two complete bodies for overlapping or identical intervals differ
 - no shared strong ETag proves they come from one representation
 
+### `CONTENT_RANGE_NOT_VISIBLE`
+
+Content-Range is not readable by the page.
+
+Emitted only by the browser page, never by the CLI.
+
+Requires:
+
+- browser capture
+- status is 206 or 416
+- the response is cross-origin and no Content-Range is among the headers readable by the page
+- the page cannot tell an absent header from one the server did not list in Access-Control-Expose-Headers
+
+### `ENCODING_DECODED_BY_BROWSER`
+
+The browser decodes a content coding before the page reads the body.
+
+Emitted only by the browser page, never by the CLI.
+
+Requires:
+
+- browser capture
+- the response declares a Content-Encoding other than identity in a header the page can read
+- the page cannot request identity, so the bytes it receives are decoded
+- bytes are not compared with the reference
+
 ### `ENCODING_UNSUPPORTED`
 
 Response carries a content coding other than identity.
@@ -196,7 +224,7 @@ A number in the response exceeds the supported 63-bit range.
 Requires:
 
 - the numeral is syntactically valid
-- it exceeds 9223372036854775807
+- it exceeds the largest value the tool represents exactly (9223372036854775807 in the CLI, 9007199254740991 in the browser page)
 
 ### `PRECONDITION_FAILED`
 
@@ -268,7 +296,19 @@ Run cancelled.
 
 Requires:
 
-- the process received an interrupt
+- the process received an interrupt (CLI) or the user pressed Cancel (browser page)
+
+### `FETCH_REJECTED`
+
+Fetch rejected before a readable response.
+
+Emitted only by the browser page, never by the CLI.
+
+Requires:
+
+- browser capture
+- the Fetch API rejected the request with an error instead of a response
+- the error names no cause: a CORS refusal, a rejected preflight, DNS, connection or TLS failure, mixed content, a blocking extension and an offline browser look alike to the page
 
 ### `HTTP_SERVER_ERROR`
 
@@ -313,6 +353,18 @@ Requires:
 ## Notes
 
 Context that never changes a status.
+
+### `ENCODING_NOT_OBSERVABLE`
+
+The page cannot observe whether the browser decoded a content coding.
+
+Emitted only by the browser page, never by the CLI.
+
+Requires:
+
+- browser capture
+- the response is cross-origin and no Content-Encoding is among the headers readable by the page
+- an absent header and one the server did not expose look alike
 
 ### `ENDPOINT_VARIED`
 

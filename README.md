@@ -124,6 +124,19 @@ RESULT: PROBLEM (exit code 1)
       limit: A proxy, load balancer or network fault can end a stream early as well; repeat the run to see whether it is deterministic.
 ```
 
+## In the browser
+
+[`web/`](web) is a static page that runs the key checks from a browser, which shows what a *page*
+can read: CORS-hidden headers, automatic content decoding and `fetch()` errors without a cause. It
+compares the received bytes with slices of a local file, keeps the byte result and the header
+evidence apart, and saves a JSON report. Requests go straight from the browser to your URL; nothing
+is uploaded. See [docs/browser.md](docs/browser.md) for use, limits, a local two-origin lab and
+hosting.
+
+```bash
+go run ./lab/browser -write-reference /tmp/reference.bin   # then open http://localhost:18080
+```
+
 ## Results and exit codes
 
 | Code | Result        | Meaning                                                                                                                                                         |
@@ -226,7 +239,8 @@ The choices behind the checks, with the RFC 9110 sections they rest on, are in
 Load testing or concurrency; a full HTTP conformance suite or `If-Range` conformance;
 `multipart/byteranges` (a multipart answer to a single-range request is reported as unsupported
 and not parsed); cache-poisoning or security scanning; endpoint discovery; checking a whole file
-through many probes; a GUI, accounts or telemetry.
+through many probes; accounts or telemetry. The browser page runs the key checks only and needs
+no server.
 
 ## Verifying a download
 

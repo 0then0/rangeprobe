@@ -76,3 +76,67 @@ The `status` of a check is the highest-priority kind among its non-note findings
 `--html` writes the same information as a single self-contained page: inline CSS with light and
 dark themes, no scripts, no external resources, no links. It carries a restrictive
 Content-Security-Policy meta tag. Everything from the network or the file system is escaped.
+
+## Browser report
+
+The page in `web/` (see [browser.md](browser.md)) writes its own document. It shares the finding
+IDs, kinds and the check statuses with the CLI report but not its layout, because a page records
+things the CLI cannot (what was readable) and cannot record others (raw requests, HTTP version).
+
+```text
+format           "rangeprobe-browser-report"
+schema_version   integer (currently 1; fields may be added, never removed or reinterpreted)
+tool             name, component ("browser-page"), version, repository
+capture          origin ("browser"), api ("fetch"), page_origin, request_options (method, mode,
+                 credentials "omit", cache, redirect, referrer_policy, request_headers,
+                 accept_encoding), observation (what bytes, headers, errors and redirects mean
+                 for a page)
+run              started_at, finished_at, duration_ms, target, target_redacted, target_origin,
+                 cross_origin, interrupted, stopped_by (null|"cancelled"|"run_timeout"),
+                 params (limits), checks_run[], checks_omitted[]
+reference        name, size                          (no content, no whole-file hash)
+endpoint         final_url, varied_between_requests
+representation   length, length_basis, etag, last_modified, accept_ranges, content_type, stable,
+                 changes[], note. Only what the page could read; null may mean not exposed.
+summary          result, headline, axes, counts, bytes{match,mismatch,not_compared},
+                 evidence{complete,incomplete}, key_checks_not_passed[]
+checks[]         see below
+run_findings[]   findings not tied to one check
+verified_claims[], unsupported[], uncertainty[], assumptions[], budget
+```
+
+`summary.result` is `pass`, `problem`, `range_ignored` or `incomplete`, derived as in the CLI.
+
+A check:
+
+```text
+id, title, key, claim
+status           "pass"|"range_ignored"|"violation"|"byte_mismatch"|"inconclusive"|
+                 "transport_error"|"skipped"
+skip             {id, reason}                       (skipped checks)
+request          range
+fetch            outcome ("response"|"rejected"|"timeout"|"cancelled"|"run_timeout"),
+                 error {name, message}              (rejected only)
+response         status, type ("basic" same-origin | "cors"), redirected, final_url,
+                 headers[] (readable ones, from a fixed list), other_header_count, content_length
+body             bytes_read, read_limit, complete, end_state, declared_length
+bytes            outcome ("match"|"mismatch"|"not_compared"), reason, scope ("interval"|
+                 "prefix_of_full_response"), compared_bytes, expected_first, expected_last,
+                 first_mismatch_offset, mismatch_count, bytes_beyond_reference, sha256,
+                 expected_sha256   (digests of the compared slices, absent without Web Crypto)
+evidence         header_visibility, content_range / content_length / content_encoding
+                 ("visible"|"absent"|"not_visible"|"not_applicable"), complete (true|false|null),
+                 missing[]
+representation   encoding ("identity"|"not_observable"|"encoded"), content_encoding
+findings[]       as in the CLI report (id, kind, message, conditions, evidence, limits)
+verified[]       claims that held (only for a passing check)
+limits[], duration_ms
+```
+
+`bytes` and `evidence` are the two axes: whether the received bytes equal the reference, and
+whether the page could see the headers it needed. `status` is derived from the findings, so a check
+with matching bytes and a hidden `Content-Range` is `inconclusive`.
+
+The report holds no response body and no part of the reference file. URLs lose user info and
+fragments; with `target_redacted: true` query values in every URL and URL-like text are replaced by
+`REDACTED` (names are kept). The page asks before exporting a URL that has a query.

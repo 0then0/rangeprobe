@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src http: https:; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>RangeProbe in the browser</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>RangeProbe <span>in the browser</span></h1>
+    <p class="lead">Can this file be read in parts, as <em>this browser</em> sees it? The page sends a few single-range requests and compares the bytes with your local copy.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="notice" aria-labelledby="how-h">
+    <h2 id="how-h">How it works</h2>
+    <ul>
+      <li>Requests go from this browser straight to the URL. No proxy, no account, no cookies (<code>credentials: omit</code>).</li>
+      <li>The reference file is never uploaded or loaded whole: only the slices that match each response are read.</li>
+      <li>A cross-origin server must allow this page with CORS. If it does not, the browser hides the response and the page can only show that <code>fetch()</code> failed.</li>
+    </ul>
+  </section>
+
+  <form id="probe-form" class="card" novalidate>
+    <div class="field">
+      <label for="url">File URL</label>
+      <input id="url" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://example.com/data/file.parquet" aria-describedby="url-hint url-error">
+      <p class="hint" id="url-hint">http or https. Query parameters are kept in the request and can be redacted in the report.</p>
+      <p class="error" id="url-error" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="ref">Reference file</label>
+      <input id="ref" type="file" aria-label="Reference file (or drop a file on this form)" aria-describedby="ref-info ref-error">
+      <p class="error" id="ref-error" role="alert"></p>
+      <p class="hint" id="ref-info">A local copy of the published file. It is assumed to be byte-identical; the page cannot check that.</p>
+    </div>
+
+    <div id="plan" class="plan" hidden>
+      <h2>Planned requests</h2>
+      <ul id="plan-list"></ul>
+      <p class="hint" id="plan-note"></p>
+    </div>
+
+    <details class="limits">
+      <summary>Limits</summary>
+      <div class="grid">
+        <div class="field"><label for="probe-size">Probe size (bytes)</label><input id="probe-size" type="number" inputmode="numeric" min="1" max="1048576" step="1" value="4096"></div>
+        <div class="field"><label for="req-timeout">Time per request (s)</label><input id="req-timeout" type="number" inputmode="numeric" min="1" max="120" step="1" value="30"></div>
+        <div class="field"><label for="run-timeout">Time for the whole run (s)</label><input id="run-timeout" type="number" inputmode="numeric" min="1" max="600" step="1" value="120"></div>
+      </div>
+      <p class="hint">Fixed: 5 requests (8 at most), 2 MiB per response, 8 MiB in total. A server that ignores Range is read for 64 KiB at most, then the transfer is cancelled.</p>
+    </details>
+
+    <div class="actions">
+      <button id="start" type="submit" class="primary">Start</button>
+      <button id="cancel" type="button" class="secondary" disabled>Cancel</button>
+    </div>
+  </form>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <section id="results" hidden aria-labelledby="results-h">
+    <h2 id="results-h">Results</h2>
+    <div id="summary" class="card summary" tabindex="-1" aria-label="Result summary"></div>
+    <ol id="checks" class="checks"></ol>
+
+    <div id="export" class="card export">
+      <h2>Report</h2>
+      <p class="hint">The JSON report holds the URL, the origin of this page, the ranges, statuses, readable headers, byte counts and comparison results. It does not contain the reference file or any response body.</p>
+      <div class="actions"><button id="download" type="button" class="primary">Download JSON report</button></div>
+    </div>
+  </section>
+
+  <details class="card limits-page">
+    <summary>What a page cannot see</summary>
+    <ul>
+      <li><strong>Raw bytes.</strong> The browser sets <code>Accept-Encoding</code> and decodes content codings before the page reads the body. The page compares the bytes it receives, which equal the bytes on the wire only when no coding was applied.</li>
+      <li><strong>Headers of cross-origin responses.</strong> Only CORS-safelisted headers and those the server lists in <code>Access-Control-Expose-Headers</code> are readable. A missing <code>Content-Range</code> may be absent or merely hidden; the page cannot tell.</li>
+      <li><strong>Why a request failed.</strong> A rejected <code>fetch()</code> names no cause. CORS, a rejected preflight, DNS, TLS, mixed content, an extension and being offline look alike. A suffix range (<code>bytes=-N</code>) needs a preflight that the other ranges do not.</li>
+      <li><strong>Redirects and protocol details.</strong> The browser follows redirects itself; the page sees only the final URL.</li>
+      <li><strong>Whether the reference is the right file.</strong> A difference means the bytes differ, not that the server is broken.</li>
+    </ul>
+    <p class="hint"><a href="https://github.com/0then0/rangeprobe/blob/main/docs/browser.md" rel="noreferrer noopener">Documentation</a></p>
+  </details>
+</main>
+
+<dialog id="export-dialog" aria-labelledby="export-title">
+  <h2 id="export-title">This URL has query parameters</h2>
+  <p>Parameters such as <code id="export-names"></code> may be secrets (tokens, signatures). Anyone who receives the report could reuse them.</p>
+  <p>With a redacted URL the values become <code>REDACTED</code>; the names stay for diagnosis.</p>
+  <div class="actions">
+    <button type="button" id="export-redacted" class="primary">Save with redacted URL</button>
+    <button type="button" id="export-full" class="secondary">Save with full URL</button>
+    <button type="button" id="export-cancel" class="secondary">Cancel</button>
+  </div>
+</dialog>
+</body>
+</html>

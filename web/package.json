@@ -1,0 +1,6 @@
+{
+  "name": "rangeprobe-web",
+  "private": true,
+  "type": "module",
+  "description": "Static browser page of RangeProbe. No dependencies, no build step."
+}
