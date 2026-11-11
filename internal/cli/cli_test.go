@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/0then0/rangeprobe/internal/testsrv"
+	"github.com/0then0/rangeprobe/internal/version"
 )
 
 func run(t *testing.T, env map[string]string, args ...string) (code int, stdout, stderr string) {
@@ -228,7 +229,7 @@ func TestParseSize(t *testing.T) {
 
 func TestVersionAndHelp(t *testing.T) {
 	code, out, _ := run(t, nil, "version")
-	if code != 0 || !strings.HasPrefix(out, "rangeprobe 0.2.0") {
+	if code != 0 || !strings.HasPrefix(out, "rangeprobe "+version.Version+" ") {
 		t.Errorf("%d %q", code, out)
 	}
 	code, out, _ = run(t, nil, "help")
