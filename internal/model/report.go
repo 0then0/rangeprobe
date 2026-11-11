@@ -41,6 +41,7 @@ type Params struct {
 	RunTimeoutMS     int64    `json:"run_timeout_ms"`
 	MaxRedirects     int      `json:"max_redirects"`
 	ProbeSize        int64    `json:"probe_size"`
+	WeakIfRange      bool     `json:"weak_if_range,omitempty"`
 	Preconditions    bool     `json:"preconditions"`
 	HeaderNames      []string `json:"user_header_names"`
 	RedactLocations  bool     `json:"redact_locations"`
@@ -81,6 +82,7 @@ type RepresentationInfo struct {
 	LastModified string   `json:"last_modified,omitempty"`
 	AcceptRanges string   `json:"accept_ranges,omitempty"`
 	ContentType  string   `json:"content_type,omitempty"`
+	Encoding     string   `json:"content_encoding,omitempty"`
 	Stable       bool     `json:"stable"`
 	Changes      []string `json:"changes,omitempty"`
 }
@@ -126,6 +128,7 @@ type Report struct {
 	Unsupported    []string           `json:"unsupported"`
 	Uncertainty    []Uncertainty      `json:"uncertainty"`
 	Assumptions    []string           `json:"assumptions"`
+	IfRange        *IfRangeSummary    `json:"if_range,omitempty"`
 	Budget         BudgetUsage        `json:"budget"`
 }
 

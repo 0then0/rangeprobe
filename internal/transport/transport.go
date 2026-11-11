@@ -90,6 +90,7 @@ type Request struct {
 	URL     string
 	Range   string // Range header value; empty sends none
 	IfMatch string // If-Match header value; empty sends none
+	IfRange string // If-Range header value; empty sends none
 }
 
 // Head is the response status line and headers.
@@ -121,7 +122,9 @@ type Exchange struct {
 	Req      Request
 	Head     *Head
 	FinalURL string
-	Hops     []Hop
+	// SentIfRange is the value on the final request, after redirect policy.
+	SentIfRange string
+	Hops        []Hop
 
 	// Body read results. EOF is true when the end of the body was seen.
 	Read     int64
@@ -174,6 +177,9 @@ func (c *Client) Fetch(ctx context.Context, req Request, decide func(*Head) Body
 	if req.Range != "" {
 		hreq.Header.Set("Range", req.Range)
 	}
+	if req.IfRange != "" {
+		hreq.Header.Set("If-Range", req.IfRange)
+	}
 	if req.IfMatch != "" {
 		hreq.Header.Set("If-Match", req.IfMatch)
 	}
@@ -186,6 +192,7 @@ func (c *Client) Fetch(ctx context.Context, req Request, decide func(*Head) Body
 	}
 	defer resp.Body.Close()
 	ex.FinalURL = resp.Request.URL.String()
+	ex.SentIfRange = resp.Request.Header.Get("If-Range")
 	head := &Head{
 		Status: resp.StatusCode, Proto: resp.Proto, Header: resp.Header,
 		ContentLength: resp.ContentLength,
@@ -263,7 +270,7 @@ func isTLS(err error) bool {
 //   - at most MaxRedirects hops;
 //   - only http and https targets, never https -> http;
 //   - no credentials in the target URL;
-//   - user-supplied headers and If-Match are removed when the target origin
+//   - user-supplied headers, If-Match and If-Range are removed when the target origin
 //     differs from the initial origin; Referer is always removed because it
 //     would leak the (possibly signed) source URL.
 func (c *Client) checkRedirect(req *http.Request, via []*http.Request) error {
@@ -294,7 +301,7 @@ func (c *Client) checkRedirect(req *http.Request, via []*http.Request) error {
 		for name := range c.cfg.Headers {
 			req.Header.Del(name)
 		}
-		for _, name := range []string{"Authorization", "Cookie", "Proxy-Authorization", "If-Match"} {
+		for _, name := range []string{"Authorization", "Cookie", "Proxy-Authorization", "If-Match", "If-Range"} {
 			req.Header.Del(name)
 		}
 	}

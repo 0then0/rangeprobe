@@ -117,17 +117,22 @@ footer{margin-top:2.5rem;color:var(--mute);font-size:.85rem}
 {{if .Reference}}<dt>Reference</dt><dd>{{.Reference.Name}}, {{.Reference.Size}} bytes. Assumed identical to the published file; not verified.</dd>{{end}}
 <dt>Length</dt><dd>{{deref .Representation.Length}}{{if .Representation.LengthBasis}} <span class="sub">(reported by the server: {{.Representation.LengthBasis}})</span>{{end}}</dd>
 <dt>ETag</dt><dd>{{if .Representation.ETag}}<code>{{.Representation.ETag}}</code> ({{.Representation.ETagStrength}}){{else}}none seen{{end}}</dd>
+{{if .Representation.Encoding}}<dt>Content encoding</dt><dd>{{.Representation.Encoding}}</dd>{{end}}
 <dt>Stable</dt><dd>{{if .Representation.Stable}}no conflicting signals seen{{else}}signals changed during the run{{end}}</dd>
 </dl>
 {{range .Representation.Changes}}<p class="warn">{{.}}</p>{{end}}
 </div>
 
+{{with .IfRange}}<p><strong>Conditional ranges:</strong> {{.ConditionalRanges}}. <strong>Mismatch fallback:</strong> {{.MismatchFallback}}. Body evidence is separate.</p>{{end}}
 <h2>Checks</h2>
 {{range .Checks}}
 <details{{if open .Status}} open{{end}}>
 <summary><span class="badge {{class .Status}}">{{label .Status}}</span> <strong>{{.Title}}</strong> <code>{{.ID}}</code>{{if .Key}} <span class="sub">key</span>{{end}}</summary>
 <div>
 <p><strong>Claim tested:</strong> {{.Claim}}</p>
+{{with .IfRange}}<p><strong>If-Range outcome:</strong> {{.Outcome}}; condition {{.Condition}}; baseline identity {{.Identity}}.</p><p>{{.Reason}}</p>
+{{if .Validator}}<p>Validator <code>{{.Validator}}</code>; reached final request: {{.ValidatorSent}}. Exact protocol octets are preserved as base64 in JSON.</p>{{end}}
+{{if .InvalidClientInput}}<p class="warnbox">Deliberately invalid client input: clients MUST NOT send weak If-Range. This opt-in probe checks server conformance.</p>{{end}}{{end}}
 {{if .Skip}}<p class="mute"><strong>Not run:</strong> <code>{{.Skip.ID}}</code> {{.Skip.Reason}}</p>{{end}}
 {{with .Request}}<p><strong>Requested</strong></p><pre>{{.Description}}</pre>{{end}}
 {{with .Response}}{{if .Status}}
@@ -183,6 +188,7 @@ footer{margin-top:2.5rem;color:var(--mute);font-size:.85rem}
 <dt>Probe size</dt><dd>{{.Run.Params.ProbeSize}} bytes</dd>
 <dt>Timeouts</dt><dd>request {{.Run.Params.RequestTimeoutMS}} ms, run {{.Run.Params.RunTimeoutMS}} ms</dd>
 <dt>Max redirects</dt><dd>{{.Run.Params.MaxRedirects}}</dd>
+<dt>Weak If-Range conformance probe</dt><dd>{{.Run.Params.WeakIfRange}}</dd>
 <dt>If-Match preconditions</dt><dd>{{.Run.Params.Preconditions}}</dd>
 <dt>User header names</dt><dd>{{if .Run.Params.HeaderNames}}{{join .Run.Params.HeaderNames ", "}} (values never recorded){{else}}none{{end}}</dd>
 </dl></div>

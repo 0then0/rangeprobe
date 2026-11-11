@@ -41,6 +41,8 @@ type Options struct {
 	Headers       http.Header     // user-supplied; values are secrets
 	ProbeSize     int64
 	Budgets       Budgets
+	IfRange       bool
+	WeakIfRange   bool
 	Preconditions bool
 	RootCAs       *x509.CertPool
 	Redactor      *redact.Redactor
@@ -74,6 +76,8 @@ type runner struct {
 
 	remote   interpret.RemoteSize
 	baseline *interpret.Fingerprint
+	// Entity-tags establish identity only within the same final resource URL.
+	ifRangeBaselineURL string
 	// ifMatch is the protocol value of the first strong ETag, sent verbatim.
 	ifMatch string
 	// etagProblem is why the first unusable ETag field was unusable.
@@ -117,6 +121,11 @@ func Run(parent context.Context, opt Options) *model.Report {
 		repr: model.RepresentationInfo{ETagStrength: "none", Stable: true},
 	}
 
+	if opt.IfRange {
+		r.runIfRange()
+		r.interrupted = parent.Err() != nil
+		return r.report(started, time.Now())
+	}
 	r.checks = append(r.checks, r.execute(plan.FirstByte()))
 	sz := plan.Sizing{}
 	switch {
@@ -174,7 +183,14 @@ func (c *capSink) Write(p []byte) (int, error) {
 }
 
 func (r *runner) execute(it plan.Item) model.Check {
+	return r.executeProbe(it, nil)
+}
+
+func (r *runner) executeProbe(it plan.Item, ir *ifRangeProbe) model.Check {
 	chk := model.Check{ID: it.ID, Title: it.Title, Key: it.Key, Claim: it.Claim}
+	if ir != nil {
+		chk.IfRange = ir.evidence()
+	}
 	if sk := r.admit(it); sk != nil {
 		chk.Skip = sk
 		chk.Finalize()
@@ -182,10 +198,16 @@ func (r *runner) execute(it plan.Item) model.Check {
 	}
 	r.reqs++
 	req := transport.Request{URL: r.opt.URL, Range: it.Spec.Header()}
-	if r.opt.Preconditions {
+	if r.opt.Preconditions && !r.opt.IfRange {
 		req.IfMatch = r.ifMatch
 	}
+	if ir != nil {
+		req.IfRange = ir.validator
+	}
 	params := interpret.Params{Spec: it.Spec, Remote: r.remote, Baseline: r.baseline, IfMatch: req.IfMatch != ""}
+	if ir != nil {
+		params.IfRange = true
+	}
 	if r.opt.Ref != nil {
 		size := r.opt.Ref.Size()
 		params.RefSize = &size
@@ -260,6 +282,9 @@ func (r *runner) execute(it plan.Item) model.Check {
 		}
 	}
 
+	if ir != nil {
+		fs = r.interpretIfRange(&chk, ir, an, ex, fs, st, cur)
+	}
 	chk.Findings = fs
 	if an != nil && ex.Fail == nil {
 		chk.Verified = append(an.Verified(r.opt.Ref != nil, sink), chk.Verified...)
@@ -327,6 +352,7 @@ func (r *runner) observe(it plan.Item, an *interpret.HeadAnalysis, ex *transport
 		case interpret.ETagWeak:
 			r.repr.ETagStrength = "weak"
 		}
+		r.repr.Encoding = fp.Encoding
 		r.repr.LastModified = fp.LastModified
 		for _, h := range resp.Headers {
 			switch h.Key {
@@ -403,6 +429,9 @@ func (r *runner) requestInfo(req transport.Request, it plan.Item) *model.Request
 		{Key: "Accept-Encoding", Value: "identity"},
 		{Key: "User-Agent", Value: version.UserAgent()},
 	}
+	if req.IfRange != "" {
+		hs = append(hs, model.KV{Key: "If-Range", Value: interpret.DisplayETag(req.IfRange)})
+	}
 	if req.IfMatch != "" {
 		hs = append(hs, model.KV{Key: "If-Match", Value: interpret.DisplayETag(req.IfMatch)})
 	}
@@ -475,6 +504,10 @@ func (r *runner) report(started, finished time.Time) *model.Report {
 		RunFindings: []model.Finding{},
 		Budget:      model.BudgetUsage{Requests: r.reqs, MaxRequests: o.Budgets.MaxRequests, BytesRead: r.bytes, MaxBytes: o.Budgets.MaxBytes},
 	}
+	if o.IfRange {
+		rep.Run.Mode = "if-range"
+		rep.Run.Params.WeakIfRange = o.WeakIfRange
+	}
 	if o.Ref != nil {
 		rep.Run.Mode = "reference"
 		rep.Reference = &model.ReferenceInfo{Name: r.rd.Path(o.Ref.Path()), Size: o.Ref.Size()}
@@ -516,6 +549,9 @@ func (r *runner) report(started, finished time.Time) *model.Report {
 	}
 	r.collect(rep)
 	rep.Summarize()
+	if o.IfRange {
+		summarizeIfRange(rep)
+	}
 	return rep
 }
 
@@ -559,7 +595,7 @@ func (r *runner) collect(rep *model.Report) {
 	rep.Unsupported = []string{
 		"multipart/byteranges responses (multi-range requests) are not requested or parsed",
 		"content codings other than identity: encoded bytes are not compared",
-		"If-Range conformance and controlled version switching",
+		"HTTP-date validators and controlled version switching",
 	}
 	for _, id := range []string{"ENCODING_UNSUPPORTED", "MULTIPART_UNSUPPORTED", "NUMBER_OUT_OF_RANGE"} {
 		if unsupported[id] {

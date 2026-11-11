@@ -5,6 +5,28 @@ All notable changes are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Set the release date in the heading
 before tagging; the release workflow refuses an undated heading.
 
+## [Unreleased]
+
+### Added
+
+- Separate `rangeprobe if-range URL` CLI mode for bounded baseline, matching strong
+  and random mismatching strong entity-tag probes. Conditional range support,
+  observed 200 fallback, confirmed violations and insufficient evidence are separate.
+- Opt-in `--weak-if-range` conformance probe, explicitly labelled deliberately invalid
+  client input, and a reproducible historical Starlette #3567 parent/fixed lab with
+  pinned validation dependencies and an independent status/header/byte oracle.
+- Additive schema-1 If-Range evidence: exact validator octets in base64, final-request
+  forwarding evidence, condition, identity, per-probe outcomes and run axes. No raw
+  body capture or new Go runtime dependencies.
+
+### Changed
+
+- If-Range mode rejects If-Match preconditions and other user precondition headers;
+  managed If-Range is stripped across origins under the existing credential policy.
+- This new mode gives incomplete evidence priority over allowed ignored Range in exit
+  codes; legacy modes and old report meaning are preserved. Full-body observation is
+  bounded and explicitly partial when cut off, independently of a successful fallback.
+
 ## [0.2.0] - 2026-11-07
 
 ### Added

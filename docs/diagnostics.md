@@ -64,6 +64,17 @@ Requires:
 - Content-Range is valid
 - the interval implied by the request and the response's own complete length does not contain the declared interval
 
+### `IF_RANGE_FALSE_206`
+
+206 despite a false If-Range condition.
+
+Requires:
+
+- If-Range reached the final request
+- the sent strong tag differs from the current response strong ETag, or the sent tag is weak
+- status is 206
+- RFC 9110 13.1.5 requires ignoring Range when the condition is false
+
 ### `OVERLAP_INCONSISTENT`
 
 Overlapping ranges disagree under one strong ETag.
@@ -206,6 +217,33 @@ Status does not allow a range verdict.
 Requires:
 
 - status is not 200, 206 or 416 and is not a server error
+
+### `IF_RANGE_PREMISE_UNKNOWN`
+
+If-Range premise cannot be established.
+
+Requires:
+
+- the validator was removed on redirect, a usable current strong ETag is absent, or the generated mismatch tag matches the response
+
+### `IF_RANGE_RESOURCE_CHANGED`
+
+Final resource differs from baseline.
+
+Requires:
+
+- if-range mode
+- the final response URL differs from the baseline URL
+- ETags are scoped to a resource; cross-resource bytes are not compared
+
+### `IF_RANGE_STATUS`
+
+Status does not establish If-Range fallback.
+
+Requires:
+
+- if-range mode
+- status is 416; no successful fallback is implied
 
 ### `MULTIPART_UNSUPPORTED`
 
@@ -391,6 +429,26 @@ Requires:
 - status is 200
 - RFC 9110 14.4 gives Content-Range no meaning for 200
 
+### `IF_RANGE_FALLBACK`
+
+200 fallback observed.
+
+Requires:
+
+- If-Range reached the final request
+- the condition is false
+- status is 200
+- body completeness is reported separately; an unread tail is not verified
+
+### `IF_RANGE_WEAK_INPUT`
+
+Deliberately invalid weak If-Range client input.
+
+Requires:
+
+- --weak-if-range selected
+- clients MUST NOT generate weak If-Range; the server must use strong comparison (RFC 9110 13.1.5)
+
 ### `PARTIAL_RESPONSE`
 
 206 covers a subset of the requested range.
@@ -440,6 +498,10 @@ Whole-run timeout reached.
 ### `SKIP_CANCELLED`
 
 Run cancelled before this check.
+
+### `SKIP_IF_RANGE_VALIDATOR`
+
+Baseline validator unavailable.
 
 ### `SKIP_OVERFLOW`
 

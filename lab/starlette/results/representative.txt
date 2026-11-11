@@ -1,0 +1,10 @@
+parent-strong  baseline     206  5B range_supported exit=0
+parent-strong  matching     206  5B conditional_range_supported exit=0
+parent-strong  mismatching  200 12B fallback_observed exit=0
+parent-weak    baseline     206  5B range_supported exit=1
+parent-weak    weak         206  5B violation exit=1
+fixed-strong   baseline     206  5B range_supported exit=0
+fixed-strong   matching     206  5B conditional_range_supported exit=0
+fixed-strong   mismatching  200 12B fallback_observed exit=0
+fixed-weak     baseline     206  5B range_supported exit=3
+fixed-weak     weak         200 12B fallback_observed exit=3

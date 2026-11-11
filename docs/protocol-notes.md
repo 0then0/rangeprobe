@@ -124,3 +124,21 @@ Only one range per request is sent. If a server answers one range with `multipar
 - `io.ErrUnexpectedEOF` from the body reader marks a stream that ended before its framing
   completed. That is what separates `BODY_TRUNCATED` from other read errors.
 - Proxy settings come from the environment (`ProxyFromEnvironment`), as with other Go tools.
+
+
+## If-Range entity-tag mode
+
+`rangeprobe if-range` implements RFC 9110 sections 13.1.5 and 14.2 separately from
+`If-Match` preconditions. Strong comparison is required. False conditions require
+ignoring Range; true conditions still permit a full 200 because range handling is
+optional. Status evidence and body coverage are separate. A mismatching 206 is a
+confirmed violation only with a usable current strong response tag different from
+the exact sent tag. The opt-in weak probe is deliberately invalid client input;
+strong comparison must fail independently of any common representation identity.
+
+The same-resource requirement includes the final URL and query. Shared strong tags
+across different resources do not justify byte comparison. Changed tags, length or
+coding preclude treating cross-version differences as a server byte defect. Existing
+request, byte, timeout and redirect budgets apply; fallback reads stop at 64 KiB or
+a smaller configured budget and close the body. An intentional prefix is not a short
+server response. See the [historical Starlette lab](../lab/starlette/README.md).

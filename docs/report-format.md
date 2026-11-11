@@ -3,12 +3,12 @@
 `--json` writes one JSON document. It is versioned by `schema_version` (currently `1`). Within a
 schema version fields may be added but never removed or reinterpreted; a breaking change raises the
 version. Slices are never `null`; a few optional ones (`verified`, `limits` on a check, `redirects`) are omitted when empty. All URLs and paths are redacted unless `--no-redact` was given
-(`run.params.redact_locations`). Header values are never recorded.
+(`run.params.redact_locations`). User-supplied header values are never recorded. Managed and selected response headers are recorded.
 
 ```text
 schema_version   integer
 tool             name, version, repository
-run              mode ("reference"|"observe"), started_at, finished_at, duration_ms,
+run              mode ("reference"|"observe"|"if-range"), started_at, finished_at, duration_ms,
                  target, interrupted, params (all limits and options; user_header_names lists
                  header names only)
 reference        name (redacted), size             (reference mode only)
@@ -70,6 +70,43 @@ limits[]     what the finding does not establish
 
 The `status` of a check is the highest-priority kind among its non-note findings, in the order
 `violation`, `byte_mismatch`, `transport_error`, `inconclusive`, `range_ignored`, `pass`.
+
+## If-Range additions (schema 1)
+
+These additive fields preserve the field names, meaning and reading of older reports.
+Consumers must tolerate additional fields and run modes. Observe/reference and browser
+capture retain their existing checks and summary semantics.
+
+- `run.params.weak_if_range`: true only when the opt-in weak conformance probe is selected.
+- `representation.content_encoding`: baseline representation coding when observed.
+- `if_range`: run axes `conditional_ranges` and `mismatch_fallback`, independent of body
+  completeness. Values come from the matching and mismatching check outcomes below.
+- `checks[].if_range`: `role` (`baseline`, `matching`, `mismatching`, `weak`),
+  `validator` (display only), `validator_base64` (exact protocol octets),
+  `validator_sent` (whether it reached the final request after redirect policy),
+  `response_etag_base64` (usable current response ETag octets), `condition`
+  (`true`, `false`, `unknown`, `not_applicable`), `baseline_identity`, `outcome`, `reason`,
+  `invalid_client_input` (true for the deliberately invalid weak client probe).
+
+Base64 is used because RFC entity-tags can contain non-UTF-8 obs-text. Decode it to
+recover bytes, never compare `validator`, `representation.etag`, or displayed headers.
+Only parsed usable tags are preserved as raw evidence; malformed/repeated/oversize
+ETags retain their safe display in response headers. No body bytes are added to JSON.
+
+Outcomes are `unavailable`, `inconclusive`, `range_supported`, `range_ignored`,
+`conditional_range_supported`, `fallback_observed`, `violation`. Check status still
+uses the established values and diagnostic priority. A fallback outcome can coexist
+with a body violation or transport failure: it describes only status/validator handling.
+`body.complete`, `end_state`, `bytes_read`, `read_limit`, declared length and SHA-256
+retain their existing meaning. A fallback prefix never confirms the unread tail or
+identity with an original, even when the conditional handling checks pass.
+
+For this new mode only, summary precedence is problem (1), incomplete (3), allowed
+ignored Range (2), pass (0). Missing validators or transport failures cannot be masked
+by an ignored baseline. Exit 0 requires both conditional range support and observed
+mismatch fallback; it does not require reading a potentially enormous fallback body.
+A successful weak probe with a weak baseline still exits 3 because the main strong
+validator checks are unavailable. `--preconditions` is rejected with exit 64.
 
 ## HTML
 

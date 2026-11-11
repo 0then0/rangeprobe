@@ -196,9 +196,10 @@ type Check struct {
 	Findings []Finding     `json:"findings"`
 	// Verified lists claims that held; empty unless Status is pass or
 	// range_ignored with verified side facts.
-	Verified   []string `json:"verified,omitempty"`
-	Limits     []string `json:"limits,omitempty"`
-	DurationMS int64    `json:"duration_ms"`
+	Verified   []string         `json:"verified,omitempty"`
+	Limits     []string         `json:"limits,omitempty"`
+	IfRange    *IfRangeEvidence `json:"if_range,omitempty"`
+	DurationMS int64            `json:"duration_ms"`
 }
 
 // Finalize derives Status from the findings and Verified claims.

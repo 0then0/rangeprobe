@@ -15,6 +15,13 @@ type DiagInfo struct {
 // patch releases; docs/diagnostics.md documents each one and a test keeps the
 // two in sync.
 var Registry = map[string]DiagInfo{
+	"IF_RANGE_RESOURCE_CHANGED": {KindInconclusive, "final resource differs from baseline", []string{"if-range mode", "the final response URL differs from the baseline URL", "ETags are scoped to a resource; cross-resource bytes are not compared"}},
+	"IF_RANGE_FALSE_206":        {KindViolation, "206 despite a false If-Range condition", []string{"If-Range reached the final request", "the sent strong tag differs from the current response strong ETag, or the sent tag is weak", "status is 206", "RFC 9110 13.1.5 requires ignoring Range when the condition is false"}},
+	"IF_RANGE_PREMISE_UNKNOWN":  {KindInconclusive, "If-Range premise cannot be established", []string{"the validator was removed on redirect, a usable current strong ETag is absent, or the generated mismatch tag matches the response"}},
+	"IF_RANGE_STATUS":           {KindInconclusive, "status does not establish If-Range fallback", []string{"if-range mode", "status is 416; no successful fallback is implied"}},
+	"IF_RANGE_FALLBACK":         {KindNote, "200 fallback observed", []string{"If-Range reached the final request", "the condition is false", "status is 200", "body completeness is reported separately; an unread tail is not verified"}},
+	"IF_RANGE_WEAK_INPUT":       {KindNote, "deliberately invalid weak If-Range client input", []string{"--weak-if-range selected", "clients MUST NOT generate weak If-Range; the server must use strong comparison (RFC 9110 13.1.5)"}},
+	"SKIP_IF_RANGE_VALIDATOR":   {KindSkipped, "baseline validator unavailable", nil},
 	// Confirmed protocol-contract violations.
 	"STATUS_206_NO_CONTENT_RANGE": {KindViolation, "206 response has no Content-Range",
 		[]string{"status is 206", "Content-Type is not multipart/byteranges", "the response headers are fully visible (always for the CLI; in a browser only for a same-origin response)", "RFC 9110 15.3.7.1 requires Content-Range in a single-part 206"}},

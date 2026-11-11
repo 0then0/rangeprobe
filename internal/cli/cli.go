@@ -32,6 +32,7 @@ const usageText = `RangeProbe checks whether a published file can be read in par
 Usage:
   rangeprobe reference [flags] URL FILE   compare range responses with a local reference file
   rangeprobe observe   [flags] URL        check the consistency of range responses without a reference
+  rangeprobe if-range  [flags] URL        check conditional download resume with entity-tags
   rangeprobe version
 
 Reference mode assumes FILE is byte-identical to the currently published file.
@@ -48,7 +49,8 @@ Flags:
   -H, --header 'Name: value'  extra request header, repeatable; values may use ${ENV_VAR}
   --header-file PATH        file with one 'Name: value' per line (owner-only permissions)
   --ca-file PATH            extra PEM CA certificates to trust (TLS verification is always on)
-  --preconditions           send If-Match with the first strong ETag seen
+  --preconditions           send If-Match with the first strong ETag seen (observe/reference)
+  --weak-if-range           opt-in invalid-client weak validator conformance probe (if-range only)
   --json PATH               write the JSON report ('-' for stdout)
   --html PATH               write a standalone HTML report
   --force                   overwrite existing report files
@@ -81,7 +83,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer, getenv fu
 	case "version", "-version", "--version":
 		printVersion(stdout)
 		return 0
-	case "reference", "observe":
+	case "reference", "observe", "if-range":
 		return runProbe(ctx, args[0], args[1:], stdout, stderr, getenv)
 	}
 	fmt.Fprintf(stderr, "rangeprobe: unknown command %q\n\n%s", args[0], usageText)
@@ -151,6 +153,7 @@ type config struct {
 	headers        strList
 	headerFile     string
 	caFile         string
+	weakIfRange    bool
 	preconditions  bool
 	jsonPath       string
 	htmlPath       string
@@ -176,6 +179,7 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 	fs.Var(&c.headers, "header", "")
 	fs.StringVar(&c.headerFile, "header-file", "", "")
 	fs.StringVar(&c.caFile, "ca-file", "", "")
+	fs.BoolVar(&c.weakIfRange, "weak-if-range", false, "")
 	fs.BoolVar(&c.preconditions, "preconditions", false, "")
 	fs.StringVar(&c.jsonPath, "json", "", "")
 	fs.StringVar(&c.htmlPath, "html", "", "")
@@ -209,9 +213,15 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 		if mode == "reference" {
 			return usageErr(stderr, "reference mode takes URL and FILE (got %d argument(s))", len(pos))
 		}
-		return usageErr(stderr, "observe mode takes exactly one URL (got %d argument(s))", len(pos))
+		return usageErr(stderr, "%s mode takes exactly one URL (got %d argument(s))", mode, len(pos))
 	}
 
+	if mode == "if-range" && c.preconditions {
+		return usageErr(stderr, "--preconditions cannot be combined with if-range")
+	}
+	if mode != "if-range" && c.weakIfRange {
+		return usageErr(stderr, "--weak-if-range requires if-range mode")
+	}
 	target, err := parseTarget(pos[0])
 	if err != nil {
 		return usageErr(stderr, "%v", err)
@@ -222,6 +232,13 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 	headers, err := collectHeaders(c.headers, c.headerFile, getenv)
 	if err != nil {
 		return usageErr(stderr, "%v", err)
+	}
+	if mode == "if-range" {
+		for _, name := range []string{"If-None-Match", "If-Modified-Since", "If-Unmodified-Since"} {
+			if len(headers.Values(name)) > 0 {
+				return usageErr(stderr, "%s changes conditional semantics and is not accepted in if-range mode", name)
+			}
+		}
 	}
 	var pool *x509.CertPool
 	if c.caFile != "" {
@@ -264,6 +281,7 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 			MaxRequests: c.maxRequests, MaxBytes: int64(c.maxBytes), MaxBody: int64(c.maxResponse),
 			RequestTimeout: c.requestTimeout, RunTimeout: c.timeout, MaxRedirects: c.maxRedirects,
 		},
+		IfRange: mode == "if-range", WeakIfRange: c.weakIfRange,
 		Preconditions: c.preconditions, RootCAs: pool, CustomCA: pool != nil,
 		Redactor: redact.New(!c.noRedact), DumpMismatch: c.dump,
 	})

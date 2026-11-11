@@ -66,6 +66,61 @@ Observe mode cannot show that bytes are correct, because there is nothing to com
 It checks that the server's answers agree with each other: status and headers, body length against
 the declared length, and overlapping or repeated reads against one another.
 
+### Conditional resume with If-Range
+
+```sh
+rangeprobe if-range https://example.com/file.bin --json report.json --html report.html
+```
+
+This separate mode sends the same bounded single byte range three times: baseline,
+matching strong `If-Range`, and an independent random strong entity-tag intended to
+mismatch. It never sends `If-Match`. `--preconditions` belongs to observe/reference:
+`If-Match` can reject a changed representation with `412`, whereas `If-Range` tells
+the server to ignore Range and send the current representation when the condition
+is false ([RFC 9110 13.1.5](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.5)).
+
+The report separates conditional range support from mismatch fallback:
+
+- Matching `206`: validates Content-Range, length and repeated bytes with the existing
+  range interpreter. Byte identity requires one final resource and a shared strong
+  ETag with no conflicting length or encoding signals. This shows consistency,
+  not identity with an unseen original.
+- Matching `200`: allowed because a server may ignore Range. Conditional resume
+  support remains unproven; a usable validator with all ranges ignored exits 2.
+- Mismatching `200`: observed fallback, with body completeness reported separately.
+  At most 64 KiB is read, further limited by response and total byte budgets. An
+  unread tail is `prefix`, never a server truncation or proof of full-file transfer.
+- Mismatching `206`: violation only when the sent validator reached the final request
+  and differs from the current response's complete strong ETag. Missing, weak or
+  unusable current ETags leave the mismatch premise inconclusive. A random collision
+  or an echoed request tag does not establish mismatch. `412`, `416`, redirects and
+  transport failures never count as fallback.
+
+Missing, weak, malformed, repeated or over-8000-octet baseline ETags make the main
+validator checks unavailable. Long usable tags are sent and compared in full;
+reports show a safe shortened form and preserve exact protocol octets as base64 in
+JSON. ETags are scoped to a resource: a changed final URL, including query, prevents
+cross-resource byte comparisons. Changed representation signals make those
+comparisons inconclusive, not byte defects.
+
+`--weak-if-range` adds a separate opt-in server conformance probe. It sends the exact
+baseline weak ETag, or the weak form of a strong baseline tag. This is **deliberately
+invalid client input**: clients MUST NOT generate weak If-Range. Strong comparison
+must fail, so `206` violates the server contract and `200` is the expected fallback.
+This is not an ordinary resume strategy. The already fixed historical
+[Starlette #3567 reproduction](lab/starlette/README.md) records exact revisions,
+commands, before/after observations and an independent HTTP byte oracle.
+
+No HTTP-date validators, multipart ranges, whole-object download or browser UI are
+included. Other conditional request headers are rejected in this mode. Existing
+budgets, TLS verification, redaction and credential forwarding rules apply.
+
+Exit codes retain their meanings: 1 confirmed defect; 3 unavailable/inconclusive
+checks or transport failures; 2 allowed ignored Range with no missing evidence;
+0 verified conditional ranges and observed mismatch fallback. Body coverage remains
+an independent field even with exit 0. Unlike legacy modes, this new mode gives
+incomplete evidence priority over allowed ignored Range. Old reports are unchanged.
+
 ### What it checks
 
 Each check is one `GET` with one `Range`. Probe size defaults to 4 KiB.
@@ -189,7 +244,7 @@ SIGTERM stop the run, close open bodies and still write the reports.
 - Only the URL you give is requested. There is no scanning or URL guessing. Local addresses are fine.
 - TLS verification is always on and cannot be switched off. For a private CA use `--ca-file`.
 - Redirects: bounded, never from HTTPS to HTTP, never to credentials in the URL. Your `-H` headers
-  and `If-Match` are sent only to the exact origin you named (scheme, host and port) and are
+  and `If-Match`/`If-Range` are sent only to the exact origin you named (scheme, host and port) and are
   dropped on any other origin. RangeProbe never adds a `Referer` and removes any on redirects.
 - Send headers with `-H 'Authorization: Bearer ${TOKEN}'` (single quotes; `${VAR}` is read from the
   environment) or with `--header-file` (one `Name: value` per line; must not be readable by other

@@ -1,0 +1,13 @@
+{
+  "python": "3.13.11 (main, Jan 27 2026, 23:31:20) [Clang 21.1.4 ]",
+  "revisions": {
+    "parent": {
+      "commit": "56d8858633c8e04113a231ddaf3e47acf1e3516d",
+      "archive_sha256": "4c7b523a2d7ddab3dfd956e2b4efad901f9fac34e3d4df0bc7224196aaee4f22"
+    },
+    "fixed": {
+      "commit": "85c3b7434fd6b58596486dbe93cfe605ee358881",
+      "archive_sha256": "9125007fa91f15bf3d1b1874c370c8469280ac4e3b9fc0f4bb0d9a8e132db75b"
+    }
+  }
+}

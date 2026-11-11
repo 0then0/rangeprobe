@@ -73,6 +73,30 @@ func text(w io.Writer, r *model.Report) {
 		fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\t%s\n", c.ID, strings.ToUpper(string(c.Status)), reqRange, resp, read)
 	}
 	tw.Flush()
+	if r.IfRange != nil {
+		p("")
+		p("If-Range evidence (raw validator octets are preserved as base64 in JSON)")
+		for _, c := range r.Checks {
+			if e := c.IfRange; e != nil {
+				p("  %s: %s; condition %s; baseline identity %s", c.ID, e.Outcome, e.Condition, e.Identity)
+				if e.Validator != "" {
+					p("      If-Range: %s (reached final request: %t)", e.Validator, e.ValidatorSent)
+				}
+				if e.InvalidClientInput {
+					p("      Deliberately invalid client input: weak If-Range conformance probe.")
+				}
+				p("      %s", e.Reason)
+				if c.Response != nil {
+					for _, h := range c.Response.Headers {
+						p("      %s: %s", h.Key, h.Value)
+					}
+				}
+				for _, l := range c.Limits {
+					p("      limit: %s", l)
+				}
+			}
+		}
+	}
 
 	var any bool
 	for _, c := range r.Checks {

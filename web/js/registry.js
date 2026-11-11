@@ -171,6 +171,58 @@ export const REGISTRY = {
       "status is not 200, 206 or 416 and is not a server error"
     ]
   },
+  "IF_RANGE_FALLBACK": {
+    "kind": "note",
+    "title": "200 fallback observed",
+    "conditions": [
+      "If-Range reached the final request",
+      "the condition is false",
+      "status is 200",
+      "body completeness is reported separately; an unread tail is not verified"
+    ]
+  },
+  "IF_RANGE_FALSE_206": {
+    "kind": "violation",
+    "title": "206 despite a false If-Range condition",
+    "conditions": [
+      "If-Range reached the final request",
+      "the sent strong tag differs from the current response strong ETag, or the sent tag is weak",
+      "status is 206",
+      "RFC 9110 13.1.5 requires ignoring Range when the condition is false"
+    ]
+  },
+  "IF_RANGE_PREMISE_UNKNOWN": {
+    "kind": "inconclusive",
+    "title": "If-Range premise cannot be established",
+    "conditions": [
+      "the validator was removed on redirect, a usable current strong ETag is absent, or the generated mismatch tag matches the response"
+    ]
+  },
+  "IF_RANGE_RESOURCE_CHANGED": {
+    "kind": "inconclusive",
+    "title": "final resource differs from baseline",
+    "conditions": [
+      "if-range mode",
+      "the final response URL differs from the baseline URL",
+      "ETags are scoped to a resource; cross-resource bytes are not compared"
+    ]
+  },
+  "IF_RANGE_STATUS": {
+    "kind": "inconclusive",
+    "title": "status does not establish If-Range fallback",
+    "conditions": [
+      "if-range mode",
+      "status is 416; no successful fallback is implied"
+    ]
+  },
+  "IF_RANGE_WEAK_INPUT": {
+    "kind": "note",
+    "title": "deliberately invalid weak If-Range client input",
+    "conditions": [
+      "--weak-if-range selected",
+      "clients MUST NOT generate weak If-Range; the server must use strong comparison (RFC 9110 13.1.5)"
+    ]
+  },
   "MULTIPART_UNSUPPORTED": {
     "kind": "inconclusive",
     "title": "multipart/byteranges response to a single-range request",
@@ -328,6 +380,11 @@ export const REGISTRY = {
   "SKIP_CANCELLED": {
     "kind": "skipped",
     "title": "run cancelled before this check",
+    "conditions": []
+  },
+  "SKIP_IF_RANGE_VALIDATOR": {
+    "kind": "skipped",
+    "title": "baseline validator unavailable",
     "conditions": []
   },
   "SKIP_OVERFLOW": {

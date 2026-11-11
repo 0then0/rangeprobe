@@ -30,6 +30,7 @@ type Params struct {
 	RefSize  *int64 // reference length; nil in observe mode
 	Remote   RemoteSize
 	Baseline *Fingerprint
+	IfRange  bool // conditional resume mode: 416 does not establish fallback
 	IfMatch  bool
 }
 
@@ -87,7 +88,12 @@ func AnalyzeHead(p Params, h *transport.Head) *HeadAnalysis {
 		a.FP.Encoding = enc
 		a.analyze200()
 	case 416:
-		a.analyze416()
+		if p.IfRange {
+			a.add(model.NewFinding("IF_RANGE_STATUS", "416 does not establish If-Range fallback", model.Ev("status", 416)))
+			a.Mode = BodyDiscard
+		} else {
+			a.analyze416()
+		}
 	case 412:
 		if p.IfMatch {
 			a.add(model.NewFinding("PRECONDITION_FAILED", "server answered 412 to If-Match with the ETag seen earlier",
