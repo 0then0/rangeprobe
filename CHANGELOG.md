@@ -5,6 +5,17 @@ All notable changes are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Set the release date in the heading
 before tagging; the release workflow refuses an undated heading.
 
+## [Unreleased]
+
+### Added
+
+- `rangeprobe multipart` checks one request for two closed byte ranges against a local
+  reference file. Text and JSON report multipart framing, range coverage, coalescing,
+  byte comparisons, full `200` responses and incomplete observations.
+- Pinned Starlette lab for [#3142](https://github.com/Kludex/starlette/pull/3142) and
+  [#3143](https://github.com/Kludex/starlette/pull/3143) with an independent raw HTTP
+  check of the header and delimiter fixes.
+
 ## [0.3.0] - 2026-11-11
 
 ### Added

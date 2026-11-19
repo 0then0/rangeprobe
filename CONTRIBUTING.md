@@ -12,8 +12,8 @@ parts?"), a bounded set of requests, and honest reporting of what was and was no
 - Keep the limits real. Nothing may read more than the configured budgets allow, and no code path may
   read a body without a limit.
 - Reports must stay safe to publish: no secrets, no response bodies, escaped untrusted text.
-- Out of scope for v0.1: load testing, multipart/byteranges, a full HTTP conformance suite,
-  endpoint discovery, whole-file verification, telemetry.
+- Out of scope: load testing, a full HTTP conformance suite, endpoint discovery,
+  unbounded downloads, and telemetry.
 
 ## Setup
 

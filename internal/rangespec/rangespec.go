@@ -37,6 +37,17 @@ type Spec struct {
 // Int returns "first-last".
 func Int(first, last int64) Spec { return Spec{Kind: KindInt, First: first, Last: last} }
 
+// ParseClosed parses a closed byte range without the bytes= prefix.
+func ParseClosed(v string) (Spec, error) {
+	a, b, _ := strings.Cut(v, "-")
+	first, firstErr := parseNum(a)
+	last, lastErr := parseNum(b)
+	if firstErr != nil || lastErr != nil || last < first {
+		return Spec{}, fmt.Errorf("expected a closed byte range FIRST-LAST with 63-bit offsets and FIRST <= LAST")
+	}
+	return Int(first, last), nil
+}
+
 // Open returns "first-".
 func Open(first int64) Spec { return Spec{Kind: KindOpen, First: first} }
 

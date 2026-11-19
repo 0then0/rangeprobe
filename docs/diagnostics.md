@@ -75,6 +75,48 @@ Requires:
 - status is 206
 - RFC 9110 13.1.5 requires ignoring Range when the condition is false
 
+### `MULTIPART_CONTENT_TYPE`
+
+Invalid multipart Content-Type or boundary.
+
+Requires:
+
+- 206 to a two-range request
+- multipart media type, boundary, or Content-Type field syntax is invalid
+
+### `MULTIPART_FRAMING`
+
+Invalid multipart framing.
+
+Requires:
+
+- a MIME delimiter or part header block is malformed, or the HTTP body ended normally without closing multipart framing
+
+### `MULTIPART_PART_CONTENT_RANGE`
+
+Part has no usable Content-Range.
+
+Requires:
+
+- a complete part header block omits Content-Range or has an invalid, unsatisfied or repeated value
+
+### `MULTIPART_TOP_CONTENT_RANGE`
+
+Top-level Content-Range on multipart 206.
+
+Requires:
+
+- Content-Type declares multipart/byteranges
+- RFC 9110 15.3.7.2 requires Content-Range within the parts
+
+### `MULTIPART_TOTAL_CONFLICT`
+
+Multipart offsets or complete lengths conflict.
+
+Requires:
+
+- parts of one 206 assert inconsistent complete representation lengths, or an interval extends beyond a length another part reports
+
 ### `OVERLAP_INCONSISTENT`
 
 Overlapping ranges disagree under one strong ETag.
@@ -138,6 +180,14 @@ Requires:
 - response is 206 (or a 200 prefix) and declares no content coding other than identity
 - the reference file length equals the length the response reports, when it reports one
 - its representation signals do not conflict with earlier responses
+
+### `MULTIPART_BYTES_MISMATCH`
+
+Observed bytes differ from the reference.
+
+Requires:
+
+- identity bytes from a 200 response or a 206 payload with a usable Content-Range differ at a known reference offset
 
 ## Range ignored
 
@@ -244,6 +294,64 @@ Requires:
 
 - if-range mode
 - status is 416; no successful fallback is implied
+
+### `MULTIPART_BODY_LIMIT`
+
+Response body end was not observed within the limit.
+
+Requires:
+
+- the two-range probe reached its body limit without seeing HTTP EOF
+
+### `MULTIPART_COALESCING_UNCERTAIN`
+
+Coalescing overhead cannot be established.
+
+Requires:
+
+- one interval bridges the requested gap
+- the gap is not smaller than the minimum framing overhead RangeProbe can infer
+
+### `MULTIPART_HEADER_LIMIT`
+
+HTTP response headers exceeded the configured limit.
+
+Requires:
+
+- net/http stopped reading a response whose headers exceeded the configured limit
+
+### `MULTIPART_PARSE_LIMIT`
+
+Multipart parsing limit reached.
+
+Requires:
+
+- MIME part header bytes or part count exceed the probe limit
+
+### `MULTIPART_PARTIAL`
+
+206 only partially covers the request.
+
+Requires:
+
+- the observed ranges do not cover both requested intervals
+- RFC 9110 15.3.7 permits sending a subset
+
+### `MULTIPART_REFERENCE_READ`
+
+Could not read the reference slice.
+
+Requires:
+
+- the local file did not supply all bytes needed for the comparison
+
+### `MULTIPART_UNEXPECTED_STATUS`
+
+Status does not establish a two-range result.
+
+Requires:
+
+- the response status is neither 200 nor 206
 
 ### `MULTIPART_UNSUPPORTED`
 
@@ -448,6 +556,15 @@ Requires:
 
 - --weak-if-range selected
 - clients MUST NOT generate weak If-Range; the server must use strong comparison (RFC 9110 13.1.5)
+
+### `MULTIPART_ORDER`
+
+Multipart parts are out of request order.
+
+Requires:
+
+- parts corresponding to different ranges are reversed
+- RFC 9110 15.3.7.2 recommends request order
 
 ### `PARTIAL_RESPONSE`
 

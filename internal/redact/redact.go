@@ -20,9 +20,10 @@ const Placeholder = "REDACTED"
 type Redactor struct {
 	// Locations controls URL query/userinfo and local path redaction.
 	// Header secrets (Secrets) are always removed from free text.
-	Locations bool
-	secrets   []string
-	rawURLs   []string
+	Locations   bool
+	secrets     []string
+	rawURLs     []string
+	queryValues *strings.Replacer
 }
 
 // New returns a Redactor. locations enables URL and path redaction.
@@ -42,6 +43,49 @@ func (r *Redactor) AddURL(raw string) {
 		r.rawURLs = append(r.rawURLs, raw)
 		sort.Slice(r.rawURLs, func(i, j int) bool { return len(r.rawURLs[i]) > len(r.rawURLs[j]) })
 	}
+}
+
+// SetURLQueryValues masks URL query values when they appear outside their URL,
+// for example in response headers. It applies only with location redaction on.
+func (r *Redactor) SetURLQueryValues(urls ...string) {
+	if !r.Locations {
+		return
+	}
+	var values []string
+	seen := make(map[string]bool)
+	for _, raw := range urls {
+		u, err := url.Parse(raw)
+		if err != nil {
+			continue
+		}
+		for field := range strings.SplitSeq(u.RawQuery, "&") {
+			_, value, _ := strings.Cut(field, "=")
+			decoded, _ := url.QueryUnescape(value)
+			for _, secret := range [2]string{value, decoded} {
+				if len(secret) >= 3 && !seen[secret] {
+					values = append(values, secret)
+					seen[secret] = true
+				}
+			}
+		}
+	}
+	sort.Slice(values, func(i, j int) bool { return len(values[i]) > len(values[j]) })
+	pairs := make([]string, 0, 2*len(values))
+	for _, value := range values {
+		pairs = append(pairs, value, Placeholder)
+	}
+	r.queryValues = strings.NewReplacer(pairs...)
+}
+
+// ReportURL applies URL redaction and also masks known secrets in the path.
+func (r *Redactor) ReportURL(raw string) string {
+	if u, err := url.Parse(raw); err == nil {
+		if path := r.maskSecrets(u.Path); path != u.Path {
+			u.Path, u.RawPath = path, ""
+			raw = u.String()
+		}
+	}
+	return r.maskSecrets(r.URL(raw))
 }
 
 // URL returns a publishable form of raw: no userinfo, no fragment, and query
@@ -88,17 +132,33 @@ var urlInText = regexp.MustCompile(`https?://[^\s"'<>]+`)
 // Text cleans free text such as error messages: registered raw URLs and any
 // other URL found in it are redacted, registered secrets are removed.
 func (r *Redactor) Text(s string) string {
+	return r.text(s, r.URL)
+}
+
+// ReportText also masks known secrets in the decoded paths of embedded URLs.
+func (r *Redactor) ReportText(s string) string {
+	return r.text(s, r.ReportURL)
+}
+
+func (r *Redactor) text(s string, cleanURL func(string) string) string {
 	for _, raw := range r.rawURLs {
-		s = strings.ReplaceAll(s, raw, r.URL(raw))
+		s = strings.ReplaceAll(s, raw, cleanURL(raw))
 	}
 	s = urlInText.ReplaceAllStringFunc(s, func(m string) string {
 		trimmed := strings.TrimRight(m, ".,;:)")
-		return r.URL(trimmed) + m[len(trimmed):]
+		return cleanURL(trimmed) + m[len(trimmed):]
 	})
+	return Clean(r.maskSecrets(s), 1024)
+}
+
+func (r *Redactor) maskSecrets(s string) string {
+	if r.queryValues != nil {
+		s = r.queryValues.Replace(s)
+	}
 	for _, sec := range r.secrets {
 		s = strings.ReplaceAll(s, sec, Placeholder)
 	}
-	return Clean(s, 1024)
+	return s
 }
 
 // Clean makes untrusted text safe to print: invalid UTF-8, control

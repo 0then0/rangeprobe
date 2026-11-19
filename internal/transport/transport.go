@@ -33,6 +33,7 @@ const (
 	FailRedirectLimit   FailKind = "redirect_limit"
 	FailTLS             FailKind = "tls"
 	FailNetwork         FailKind = "network"
+	FailHeaderLimit     FailKind = "header_limit"
 	// FailTruncated means the stream ended before the declared framing
 	// completed (io.ErrUnexpectedEOF).
 	FailTruncated FailKind = "truncated"
@@ -52,6 +53,10 @@ type Config struct {
 	Headers        http.Header
 	RequestTimeout time.Duration
 	MaxRedirects   int
+	// MaxResponseHeaderBytes overrides net/http's response header limit when positive.
+	MaxResponseHeaderBytes int64
+	// SkipRedirectBodies avoids net/http's automatic drain on redirect hops.
+	SkipRedirectBodies bool
 	// RootCAs extends certificate verification; nil uses the system pool.
 	// Verification is never disabled.
 	RootCAs *x509.CertPool
@@ -76,6 +81,9 @@ func New(cfg Config) *Client {
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.DisableCompression = true // never decode: range offsets address encoded bytes
 		tr.DisableKeepAlives = true  // each probe is independent; no poisoned reuse
+		if cfg.MaxResponseHeaderBytes > 0 {
+			tr.MaxResponseHeaderBytes = cfg.MaxResponseHeaderBytes
+		}
 		tr.TLSClientConfig = &tls.Config{RootCAs: cfg.RootCAs, MinVersion: tls.VersionTLS12}
 		tr.ForceAttemptHTTP2 = true
 		rt = tr
@@ -245,10 +253,20 @@ func (c *Client) classify(run, req context.Context, st *fetchState, err error) *
 		return &Failure{FailTimeout, "request timeout exceeded"}
 	case errors.Is(err, io.ErrUnexpectedEOF):
 		return &Failure{FailTruncated, "stream ended before the declared length"}
+	case c.cfg.MaxResponseHeaderBytes > 0 && isHeaderLimit(err):
+		return &Failure{FailHeaderLimit, "response headers exceeded the configured limit"}
 	case isTLS(err):
 		return &Failure{FailTLS, "TLS verification failed (private CA? see --ca-file): " + msg}
 	}
 	return &Failure{FailNetwork, msg}
+}
+
+// net/http does not expose a header-limit error type for HTTP/1.1 or HTTP/2.
+func isHeaderLimit(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "net/http: server response headers exceeded ") ||
+		strings.HasSuffix(msg, "response header list larger than advertised limit") ||
+		strings.HasSuffix(msg, "header list too large")
 }
 
 func isTimeout(err error) bool {
@@ -274,6 +292,10 @@ func isTLS(err error) bool {
 //     differs from the initial origin; Referer is always removed because it
 //     would leak the (possibly signed) source URL.
 func (c *Client) checkRedirect(req *http.Request, via []*http.Request) error {
+	if c.cfg.SkipRedirectBodies && req.Response != nil {
+		req.Response.Body.Close()
+		req.Response.Body = http.NoBody
+	}
 	st, _ := req.Context().Value(stateKey{}).(*fetchState)
 	if st == nil {
 		st = &fetchState{origin: via[0].URL}

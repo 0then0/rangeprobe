@@ -1,9 +1,11 @@
 # Report format
 
-`--json` writes one JSON document. It is versioned by `schema_version` (currently `1`). Within a
-schema version fields may be added but never removed or reinterpreted; a breaking change raises the
-version. Slices are never `null`; a few optional ones (`verified`, `limits` on a check, `redirects`) are omitted when empty. All URLs and paths are redacted unless `--no-redact` was given
-(`run.params.redact_locations`). User-supplied header values are never recorded. Managed and selected response headers are recorded.
+`--json` writes one JSON document. The `reference`, `observe`, and `if-range` modes use the
+format below. The [`multipart` mode](#multipart-report) has a separate format. Both use
+`schema_version` (currently `1`). A breaking change raises the version. Arrays may be omitted
+where marked optional. By default, reports redact URL query values and local directories.
+`--no-redact` exposes those location details. Reports include selected response headers and
+redact registered request-header secrets.
 
 ```text
 schema_version   integer
@@ -28,6 +30,24 @@ uncertainty[]    {source, id, text}: why conclusions are limited
 assumptions[]    what the results depend on
 budget           requests, max_requests, bytes_read, max_total_bytes
 ```
+
+## Multipart report
+
+The top-level `mode` is `multipart`. `range` is the sent Range value, and `requested` and
+`covered_bytes` use request order. Coverage is computed from the union of the observed
+intervals. It measures offsets present in the response independently of byte equality.
+
+`response_form` describes the observed status and framing (`multipart_206`, `single_206`,
+`full_200`, `other`, or `no_response`). `body_complete`, `bytes_read`, `body_limit`, and
+`observation_issue` describe the HTTP body's observation. `multipart_framing` and
+`closing_boundary` describe the MIME framing independently.
+
+`parts` records declared offsets and lengths, payload bytes identified and compared, and
+the comparison result (`match`, `prefix_match`, `mismatch`, or `not_compared`). An undelimited
+part can record its complete headers with `body_complete` false and zero identified payload
+bytes. A `200` uses `full_comparison` for the corresponding body comparison.
+`findings`, `result`, and `exit_code` report the verdict. The finding's `conditions`, `evidence`,
+and `limits` are arrays, including when empty. The report contains no payload bytes.
 
 ## Check
 

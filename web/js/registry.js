@@ -223,6 +223,109 @@ export const REGISTRY = {
       "clients MUST NOT generate weak If-Range; the server must use strong comparison (RFC 9110 13.1.5)"
     ]
   },
+  "MULTIPART_BODY_LIMIT": {
+    "kind": "inconclusive",
+    "title": "response body end was not observed within the limit",
+    "conditions": [
+      "the two-range probe reached its body limit without seeing HTTP EOF"
+    ]
+  },
+  "MULTIPART_BYTES_MISMATCH": {
+    "kind": "byte_mismatch",
+    "title": "observed bytes differ from the reference",
+    "conditions": [
+      "identity bytes from a 200 response or a 206 payload with a usable Content-Range differ at a known reference offset"
+    ]
+  },
+  "MULTIPART_COALESCING_UNCERTAIN": {
+    "kind": "inconclusive",
+    "title": "coalescing overhead cannot be established",
+    "conditions": [
+      "one interval bridges the requested gap",
+      "the gap is not smaller than the minimum framing overhead RangeProbe can infer"
+    ]
+  },
+  "MULTIPART_CONTENT_TYPE": {
+    "kind": "violation",
+    "title": "invalid multipart Content-Type or boundary",
+    "conditions": [
+      "206 to a two-range request",
+      "multipart media type, boundary, or Content-Type field syntax is invalid"
+    ]
+  },
+  "MULTIPART_FRAMING": {
+    "kind": "violation",
+    "title": "invalid multipart framing",
+    "conditions": [
+      "a MIME delimiter or part header block is malformed, or the HTTP body ended normally without closing multipart framing"
+    ]
+  },
+  "MULTIPART_HEADER_LIMIT": {
+    "kind": "inconclusive",
+    "title": "HTTP response headers exceeded the configured limit",
+    "conditions": [
+      "net/http stopped reading a response whose headers exceeded the configured limit"
+    ]
+  },
+  "MULTIPART_ORDER": {
+    "kind": "note",
+    "title": "multipart parts are out of request order",
+    "conditions": [
+      "parts corresponding to different ranges are reversed",
+      "RFC 9110 15.3.7.2 recommends request order"
+    ]
+  },
+  "MULTIPART_PARSE_LIMIT": {
+    "kind": "inconclusive",
+    "title": "multipart parsing limit reached",
+    "conditions": [
+      "MIME part header bytes or part count exceed the probe limit"
+    ]
+  },
+  "MULTIPART_PARTIAL": {
+    "kind": "inconclusive",
+    "title": "206 only partially covers the request",
+    "conditions": [
+      "the observed ranges do not cover both requested intervals",
+      "RFC 9110 15.3.7 permits sending a subset"
+    ]
+  },
+  "MULTIPART_PART_CONTENT_RANGE": {
+    "kind": "violation",
+    "title": "part has no usable Content-Range",
+    "conditions": [
+      "a complete part header block omits Content-Range or has an invalid, unsatisfied or repeated value"
+    ]
+  },
+  "MULTIPART_REFERENCE_READ": {
+    "kind": "inconclusive",
+    "title": "could not read the reference slice",
+    "conditions": [
+      "the local file did not supply all bytes needed for the comparison"
+    ]
+  },
+  "MULTIPART_TOP_CONTENT_RANGE": {
+    "kind": "violation",
+    "title": "top-level Content-Range on multipart 206",
+    "conditions": [
+      "Content-Type declares multipart/byteranges",
+      "RFC 9110 15.3.7.2 requires Content-Range within the parts"
+    ]
+  },
+  "MULTIPART_TOTAL_CONFLICT": {
+    "kind": "violation",
+    "title": "multipart offsets or complete lengths conflict",
+    "conditions": [
+      "parts of one 206 assert inconsistent complete representation lengths, or an interval extends beyond a length another part reports"
+    ]
+  },
+  "MULTIPART_UNEXPECTED_STATUS": {
+    "kind": "inconclusive",
+    "title": "status does not establish a two-range result",
+    "conditions": [
+      "the response status is neither 200 nor 206"
+    ]
+  },
   "MULTIPART_UNSUPPORTED": {
     "kind": "inconclusive",
     "title": "multipart/byteranges response to a single-range request",

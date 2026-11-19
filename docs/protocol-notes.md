@@ -104,13 +104,15 @@ check needs a server-reported length and is skipped (`SKIP_REMOTE_SIZE`) without
 server's length differs from the reference's, `REFERENCE_SIZE_MISMATCH` is recorded and every byte
 comparison in the run is downgraded to inconclusive.
 
-## Not requested: `HEAD`, multipart
+## `HEAD` and multipart responses
 
 `HEAD` is never used. Range semantics are defined for `GET` only (14.2) and many stores handle
 `HEAD` differently. A response may arrive without `Content-Length`.
 
-Only one range per request is sent. If a server answers one range with `multipart/byteranges`
-(14.6), RangeProbe records `MULTIPART_UNSUPPORTED` and does not read the body.
+The `reference`, `observe`, and `if-range` modes send one range per request. If a server answers
+one range with `multipart/byteranges` (14.6), those modes record `MULTIPART_UNSUPPORTED` and skip
+the body. The [multipart mode](../README.md#verify-two-ranges-in-one-request) sends two closed ranges in a
+single GET and checks the resulting offsets, framing, and bytes against a reference file.
 
 ## Go net/http details
 

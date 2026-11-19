@@ -11,9 +11,8 @@
 
 **Can this published file be read in parts?**
 
-RangeProbe sends a small, bounded set of single-range HTTP requests to a URL you name, checks
-the responses, and, when you have a local copy, compares the bytes it receives with the matching
-slices of that copy.
+RangeProbe sends bounded HTTP range requests to a URL you name, checks the responses, and,
+when you have a local copy, compares the bytes it receives with the matching slices of that copy.
 
 It exists for failures like this: a full `GET` works, but reading the middle or the footer of the
 file returns wrong or empty data. That breaks Parquet readers, video seeking and resumed downloads.
@@ -121,9 +120,43 @@ checks or transport failures; 2 allowed ignored Range with no missing evidence;
 an independent field even with exit 0. Unlike legacy modes, this new mode gives
 incomplete evidence priority over allowed ignored Range. Old reports are unchanged.
 
+### Verify two ranges in one request
+
+```sh
+rangeprobe multipart https://example.com/file.bin \
+  --range 0-15 --range 128-143 --reference fixture.bin --json report.json
+```
+
+Pass two inclusive `FIRST-LAST` ranges within the local reference file. At least one byte
+must separate the ranges. The request sends them in the given order.
+
+- For a multipart `206`, RangeProbe checks the boundary, CRLF delimiters, closing delimiter,
+  and each part's `Content-Range` and length. It compares raw part bytes at the declared
+  offsets and records reordering as a note. If reading stops inside a part, its complete
+  headers can still be reported while its undelimited payload remains unverified.
+- For a single-part `206`, RangeProbe checks the declared interval and its bytes. It can
+  confirm coalescing when the response covers the exact combined span, including the gap,
+  and the gap is smaller than a conservative lower bound on MIME overhead. Larger gaps can
+  leave the RFC's coalescing condition inconclusive because the actual multipart overhead
+  is unknown. Partial range coverage exits 3. [RFC 9110 §15.3.7](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.7)
+- A `200` is reported as a full response. It exits 2 if the complete body matches the reference.
+  A read limit, timeout, or interrupted stream can leave only a prefix observed. The report
+  records the cause separately from a protocol error or byte mismatch.
+
+The body budget uses the smaller of `--max-bytes` and `--max-response-bytes`. It defaults to
+2 MiB and includes all multipart framing or any bytes in a coalesced gap. Both flags accept up
+to 32 MiB in this mode. Response headers are capped at 64 KiB. Multipart parsing also caps
+the combined part headers at 64 KiB and the number of parts at 16.
+
+Text output and the optional JSON report include ranges, lengths, comparisons and observation
+status. With `--json -`, stdout carries JSON and the text summary goes to stderr. URL query
+values and local directories are redacted by default. Reports contain no response bodies.
+See the [historical Starlette lab](lab/starlette/README.md#historical-multipart-fixes) for raw
+HTTP observations before and after the header and delimiter fixes.
+
 ### What it checks
 
-Each check is one `GET` with one `Range`. Probe size defaults to 4 KiB.
+In reference and observe modes, each check is one `GET` with one range. Probe size defaults to 4 KiB.
 
 | Check           | Request                           | What is tested                                              |
 | --------------- | --------------------------------- | ----------------------------------------------------------- |
@@ -222,7 +255,7 @@ returning other bytes.
 
 ## Limits
 
-Every run has finite limits. Defaults, with the flag that changes each:
+Every run has finite limits. The single-range modes use these defaults:
 
 | Limit                                | Default           | Flag                   |
 | ------------------------------------ | ----------------- | ---------------------- |
@@ -235,9 +268,10 @@ Every run has finite limits. Defaults, with the flag that changes each:
 | Redirects per request                | 5 (max 20)        | `--max-redirects`      |
 
 Requests are sequential and never retried. Only body bytes count toward the byte budget.
-If a server answers a tiny range with a huge full response, RangeProbe reads at most 64 KiB of it
-for a sanity comparison, stops, and reports what it could and could not establish. Ctrl-C and
-SIGTERM stop the run, close open bodies and still write the reports.
+The [multipart mode](#verify-two-ranges-in-one-request) has its own request and byte limits.
+For the single-range modes, if a server answers a tiny range with a huge full response,
+RangeProbe reads at most 64 KiB of it for a sanity comparison. Ctrl-C and SIGTERM stop
+the run, close open bodies and still write the reports.
 
 ## Privacy and credentials
 
@@ -249,13 +283,13 @@ SIGTERM stop the run, close open bodies and still write the reports.
 - Send headers with `-H 'Authorization: Bearer ${TOKEN}'` (single quotes; `${VAR}` is read from the
   environment) or with `--header-file` (one `Name: value` per line; must not be readable by other
   users). Values given literally on the command line are visible in the process list.
-- Header values are never written to reports; only header names are. The reproduction block in each
-  check shows `REDACTED` for them and contains no shell command.
+- Reports omit custom request header values. The reproduction block in a single-range check
+  shows `REDACTED` for them and contains no shell command.
 - By default reports replace URL query values with `REDACTED`, drop userinfo and fragments, and show
   only the base name of the reference file. `--no-redact` turns this off for URLs and paths.
-- Reports never contain response bodies. For a mismatch they hold offsets, lengths and SHA-256
-  digests. `--dump-mismatch N` (at most 64) adds a hex fragment and prints a warning, because the
-  fragment is file content.
+- Multipart reports record mismatch offsets and lengths. Single-range reports also record SHA-256
+  digests. In the single-range modes `--dump-mismatch N` (at most 64) adds a hex fragment and prints
+  a warning, because the fragment is file content.
 - The HTML report has no scripts, no external resources and no links. Untrusted headers, URLs and
   messages are escaped, and control and bidirectional characters are made visible.
 - Report files are written to a temporary file and moved into place, so a partial report never
@@ -266,9 +300,9 @@ SIGTERM stop the run, close open bodies and still write the reports.
 
 - Text summary on standard output (`-q` hides it). With `--json -` it goes to standard error and
   standard output carries only the JSON.
-- `--json PATH`: versioned JSON, schema version 1, see [docs/report-format.md](docs/report-format.md).
-  It records the app version and all run parameters.
-- `--html PATH`: one standalone file, readable offline.
+- `--json PATH` writes versioned JSON. The [single-range schema](docs/report-format.md)
+  and the [multipart schema](docs/report-format.md#multipart-report) each use version 1.
+- `--html PATH` writes one standalone file for reference, observe and if-range modes.
 
 For each check the reports show what was requested, what the server returned, how many bytes were
 actually read, the claim that was tested, the result, and the limits of that result. They also
@@ -289,13 +323,12 @@ The choices behind the checks, with the RFC 9110 sections they rest on, are in
 - `HEAD` is never required. `Content-Length` may be absent.
 - Weak ETags are never used to confirm identity.
 
-## Not in v0.1
+## Scope
 
-Load testing or concurrency; a full HTTP conformance suite or `If-Range` conformance;
-`multipart/byteranges` (a multipart answer to a single-range request is reported as unsupported
-and not parsed); cache-poisoning or security scanning; endpoint discovery; checking a whole file
-through many probes; accounts or telemetry. The browser page runs the key checks only and needs
-no server.
+The CLI's separate `multipart` mode handles `multipart/byteranges` responses to two closed
+ranges. The browser page runs the key single-range checks. Load testing, cache-poisoning,
+security scanning, endpoint discovery, whole-file verification through many probes, accounts
+and telemetry are outside the project's scope.
 
 ## Verifying a download
 

@@ -21,6 +21,7 @@ import (
 
 	"github.com/0then0/rangeprobe/internal/model"
 	"github.com/0then0/rangeprobe/internal/probe"
+	"github.com/0then0/rangeprobe/internal/rangespec"
 	"github.com/0then0/rangeprobe/internal/redact"
 	"github.com/0then0/rangeprobe/internal/reference"
 	"github.com/0then0/rangeprobe/internal/report"
@@ -33,6 +34,8 @@ Usage:
   rangeprobe reference [flags] URL FILE   compare range responses with a local reference file
   rangeprobe observe   [flags] URL        check the consistency of range responses without a reference
   rangeprobe if-range  [flags] URL        check conditional download resume with entity-tags
+  rangeprobe multipart [flags] URL --range FIRST-LAST --range FIRST-LAST --reference FILE
+                                         verify a two-range response against a local file
   rangeprobe version
 
 Reference mode assumes FILE is byte-identical to the currently published file.
@@ -40,7 +43,7 @@ Observe mode cannot show that bytes are correct, only that the answers are consi
 
 Flags:
   --max-requests N          most requests to send (default 16, max 100)
-  --max-bytes SIZE          most body bytes to read over the whole run (default 8MiB, max 1GiB)
+  --max-bytes SIZE          most body bytes to read over the whole run (default 8MiB)
   --max-response-bytes SIZE most body bytes to read from one response (default 2MiB)
   --probe-size SIZE         length of the sampled ranges (default 4KiB)
   --request-timeout D       timeout per request including its body (default 30s)
@@ -51,14 +54,18 @@ Flags:
   --ca-file PATH            extra PEM CA certificates to trust (TLS verification is always on)
   --preconditions           send If-Match with the first strong ETag seen (observe/reference)
   --weak-if-range           opt-in invalid-client weak validator conformance probe (if-range only)
+  --range FIRST-LAST        closed byte range, repeat exactly twice (multipart only)
+  --reference FILE          local file to compare with the response (multipart only)
   --json PATH               write the JSON report ('-' for stdout)
-  --html PATH               write a standalone HTML report
+  --html PATH               write a standalone HTML report (reference, observe, if-range)
   --force                   overwrite existing report files
   --no-redact               keep URL query values and full local paths in reports
   --dump-mismatch N         include up to N (max 64) bytes around the first mismatch (privacy risk)
   -q, --quiet               do not print the text summary
 
 SIZE accepts B, KiB, MiB, GiB suffixes (for example 64KiB).
+Multipart mode uses the lower of the two byte limits, each configurable up to 32MiB.
+Multipart mode sends one probe and accepts --json for structured output.
 
 Exit codes:
   0    all key checks passed
@@ -83,7 +90,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer, getenv fu
 	case "version", "-version", "--version":
 		printVersion(stdout)
 		return 0
-	case "reference", "observe", "if-range":
+	case "reference", "observe", "if-range", "multipart":
 		return runProbe(ctx, args[0], args[1:], stdout, stderr, getenv)
 	}
 	fmt.Fprintf(stderr, "rangeprobe: unknown command %q\n\n%s", args[0], usageText)
@@ -165,13 +172,25 @@ type config struct {
 
 func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io.Writer, getenv func(string) string) int {
 	var c config
+	var refPath string
+	var rangeFlags strList
+	multipart := mode == "multipart"
 	c.maxBytes, c.maxResponse, c.probeSize = 8<<20, 2<<20, 4<<10
 	fs := flag.NewFlagSet("rangeprobe "+mode, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	fs.IntVar(&c.maxRequests, "max-requests", 16, "")
+	if multipart {
+		fs.Var(&rangeFlags, "range", "")
+		fs.StringVar(&refPath, "reference", "", "")
+	} else {
+		fs.IntVar(&c.maxRequests, "max-requests", 16, "")
+		fs.Var(&c.probeSize, "probe-size", "")
+		fs.BoolVar(&c.weakIfRange, "weak-if-range", false, "")
+		fs.BoolVar(&c.preconditions, "preconditions", false, "")
+		fs.StringVar(&c.htmlPath, "html", "", "")
+		fs.IntVar(&c.dump, "dump-mismatch", 0, "")
+	}
 	fs.Var(&c.maxBytes, "max-bytes", "")
 	fs.Var(&c.maxResponse, "max-response-bytes", "")
-	fs.Var(&c.probeSize, "probe-size", "")
 	fs.DurationVar(&c.requestTimeout, "request-timeout", 30*time.Second, "")
 	fs.DurationVar(&c.timeout, "timeout", 2*time.Minute, "")
 	fs.IntVar(&c.maxRedirects, "max-redirects", 5, "")
@@ -179,13 +198,9 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 	fs.Var(&c.headers, "header", "")
 	fs.StringVar(&c.headerFile, "header-file", "", "")
 	fs.StringVar(&c.caFile, "ca-file", "", "")
-	fs.BoolVar(&c.weakIfRange, "weak-if-range", false, "")
-	fs.BoolVar(&c.preconditions, "preconditions", false, "")
 	fs.StringVar(&c.jsonPath, "json", "", "")
-	fs.StringVar(&c.htmlPath, "html", "", "")
 	fs.BoolVar(&c.force, "force", false, "")
 	fs.BoolVar(&c.noRedact, "no-redact", false, "")
-	fs.IntVar(&c.dump, "dump-mismatch", 0, "")
 	fs.BoolVar(&c.quiet, "q", false, "")
 	fs.BoolVar(&c.quiet, "quiet", false, "")
 
@@ -226,17 +241,17 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 	if err != nil {
 		return usageErr(stderr, "%v", err)
 	}
-	if err := c.validate(); err != nil {
+	if err := c.validate(multipart); err != nil {
 		return usageErr(stderr, "%v", err)
 	}
 	headers, err := collectHeaders(c.headers, c.headerFile, getenv)
 	if err != nil {
 		return usageErr(stderr, "%v", err)
 	}
-	if mode == "if-range" {
+	if mode == "if-range" || multipart {
 		for _, name := range []string{"If-None-Match", "If-Modified-Since", "If-Unmodified-Since"} {
 			if len(headers.Values(name)) > 0 {
-				return usageErr(stderr, "%s changes conditional semantics and is not accepted in if-range mode", name)
+				return usageErr(stderr, "%s changes conditional semantics and is not accepted in %s mode", name, mode)
 			}
 		}
 	}
@@ -248,10 +263,30 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 	}
 	var ref *reference.File
 	if mode == "reference" {
-		if ref, err = reference.Open(pos[1]); err != nil {
+		refPath = pos[1]
+	}
+	var requested [2]rangespec.Spec
+	if multipart {
+		if refPath == "" || len(rangeFlags) != len(requested) {
+			return usageErr(stderr, "multipart mode requires --reference FILE and exactly two --range FIRST-LAST flags")
+		}
+		for i, value := range rangeFlags {
+			requested[i], err = rangespec.ParseClosed(value)
+			if err != nil {
+				return usageErr(stderr, "--range %d: %v", i+1, err)
+			}
+		}
+	}
+	if multipart || mode == "reference" {
+		if ref, err = reference.Open(refPath); err != nil {
 			return usageErr(stderr, "reference file: %v", err)
 		}
 		defer ref.Close()
+	}
+	if multipart {
+		if err := probe.ValidateMultipartRanges(requested, ref.Size()); err != nil {
+			return usageErr(stderr, "%v", err)
+		}
 	}
 	for _, out := range []string{c.jsonPath, c.htmlPath} {
 		if err := checkOutput(out, ref, c.force); err != nil {
@@ -273,6 +308,10 @@ func runProbe(ctx context.Context, mode string, args []string, stdout, stderr io
 			fmt.Fprintln(stderr, "note: header values passed with -H are visible in the process list; use ${ENV_VAR} or --header-file for secrets")
 			break
 		}
+	}
+
+	if multipart {
+		return runMultipart(ctx, c, target, ref, requested, headers, pool, stdout, stderr)
 	}
 
 	rep := probe.Run(ctx, probe.Options{
@@ -310,12 +349,8 @@ func writeReports(c config, rep *model.Report, stdout io.Writer) error {
 		if err != nil {
 			return err
 		}
-		if c.jsonPath == "-" {
-			if _, err := stdout.Write(b); err != nil {
-				return err
-			}
-		} else if err := report.WriteFile(c.jsonPath, b, c.force); err != nil {
-			return fmt.Errorf("JSON report: %w", err)
+		if err := writeJSON(c, b, stdout); err != nil {
+			return err
 		}
 	}
 	if c.htmlPath != "" {
@@ -330,20 +365,35 @@ func writeReports(c config, rep *model.Report, stdout io.Writer) error {
 	return nil
 }
 
+func writeJSON(c config, b []byte, stdout io.Writer) error {
+	if c.jsonPath == "-" {
+		_, err := stdout.Write(b)
+		return err
+	}
+	if err := report.WriteFile(c.jsonPath, b, c.force); err != nil {
+		return fmt.Errorf("JSON report: %w", err)
+	}
+	return nil
+}
+
 func usageErr(w io.Writer, format string, a ...any) int {
 	fmt.Fprintf(w, "rangeprobe: "+format+"\nRun 'rangeprobe help' for usage.\n", a...)
 	return model.ExitUsage
 }
 
-func (c *config) validate() error {
+func (c *config) validate(multipart bool) error {
 	switch {
-	case c.maxRequests < 1 || c.maxRequests > 100:
+	case !multipart && (c.maxRequests < 1 || c.maxRequests > 100):
 		return errors.New("--max-requests must be between 1 and 100")
-	case c.maxBytes < 1 || c.maxBytes > 1<<30:
+	case multipart && (c.maxBytes < 1 || c.maxBytes > probe.MaxMultipartBody):
+		return errors.New("--max-bytes must be between 1B and 32MiB in multipart mode")
+	case !multipart && (c.maxBytes < 1 || c.maxBytes > 1<<30):
 		return errors.New("--max-bytes must be between 1B and 1GiB")
-	case c.maxResponse < 2 || c.maxResponse > c.maxBytes:
+	case multipart && (c.maxResponse < 1 || c.maxResponse > probe.MaxMultipartBody):
+		return errors.New("--max-response-bytes must be between 1B and 32MiB in multipart mode")
+	case !multipart && (c.maxResponse < 2 || c.maxResponse > c.maxBytes):
 		return errors.New("--max-response-bytes must be at least 2B and not above --max-bytes")
-	case c.probeSize < 1 || c.probeSize >= c.maxResponse:
+	case !multipart && (c.probeSize < 1 || c.probeSize >= c.maxResponse):
 		return errors.New("--probe-size must be at least 1B and below --max-response-bytes")
 	case c.requestTimeout <= 0 || c.requestTimeout > time.Hour:
 		return errors.New("--request-timeout must be positive and at most 1h")
